@@ -4,8 +4,6 @@ _site/
 .jekyll-metadata
 assets/
 _posts/
-_layouts/
-_includes/
 _data/
 _sass/
 
