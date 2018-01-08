@@ -101,8 +101,8 @@ port:    4000
 url: # the base hostname & protocol for your site, e.g. http://example.com
 baseurl: # the subpath of your site, e.g. /blog
 title: 끄적끄적 cODe
-description: "A gem-based responsive simple texture styled Jekyll theme."
-keywords: 'jekyll,theme,gem-based,blog'
+description: "python django code ..."
+keywords: 'python, django, jekyll, blog'
 author:
   name: '주인장'
   job_title:

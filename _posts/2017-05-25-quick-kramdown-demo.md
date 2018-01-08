@@ -1,14 +1,12 @@
 ---
 layout: post
-title: "Quick kramdown demo"
+title: "kramdown 마크다운 편집기"
 description: "A quick demo post to some kramdown features."
-categories: [demo]
-tags: [demo, jekyll]
+categories: jekyll
+tags: [jekyll, kramdown]
 redirect_from:
-  - /2017/05/25/
+  - /2017/12/26/
 ---
-
-> This is [kramdown][kramdown] formatting test page for [Simple Texture][Simple Texture] theme.
 
 * Kramdown table of contents
 {:toc .toc}
@@ -16,30 +14,43 @@ redirect_from:
 # General Usage
 
 This is a normal paragraph.
-
+`[a link](http://yizeng.me)`
 This is [a link](http://yizeng.me) to my homepage.
+`[link](http://yizeng.me/blog "Yi Zeng's Blog")`
 A [link](http://yizeng.me/blog "Yi Zeng's Blog") can also have a title.
 
+`***text with light and strong emphasis***`
 This is a ***text with light and strong emphasis***.
 
+` **is _emphasized_ as well**`
 This **is _emphasized_ as well**.
 
+`*does _not_ work*`
 This *does _not_ work*.
 
+`**does __not__ work either**`
 This **does __not__ work either**.
 
+`footnote[^1]`
 This is a footnote[^1].
 
+`<kbd>keyboard text</kbd>`
+``<code>``
 This scarcely known tag emulates <kbd>keyboard text</kbd>, which is usually styled like the `<code>` tag.
 
+`<ins>inserted</ins>`
 This tag should denote <ins>inserted</ins> text.
 
+`_italicize_`
 The emphasize tag should _italicize_ text.
 
+`<strike>strikeout text</strike>`
 This tag will let you <strike>strikeout text</strike>.
+
 
 ## Blockquotes
 
+`> ruby -v`
 > ruby -v
 >
 > tsc -v
@@ -85,13 +96,13 @@ This tag will let you <strike>strikeout text</strike>.
 * Table 1
 
     |-----------------+------------+-----------------+----------------|
-    | Default aligned |Left aligned| Center aligned  | Right aligned  |
-    |-----------------|:-----------|:---------------:|---------------:|
-    | First body part |Second cell | Third cell      | fourth cell    |
-    | Second line     |foo         | **strong**      | baz            |
-    | Third line      |quux        | baz             | bar            |
-    | Footer row      |            |                 |                |
-    |-----------------+------------+-----------------+----------------|
+    | Default aligned                          | Left aligned | Center aligned | Right aligned |
+    | ---------------------------------------- | :----------- | :------------: | ------------: |
+    | First body part                          | Second cell  |   Third cell   |   fourth cell |
+    | Second line                              | foo          |   **strong**   |           baz |
+    | Third line                               | quux         |      baz       |           bar |
+    | Footer row                               |              |                |               |
+    | -----------------+------------+-----------------+---------------- |              |                |               |
 
 * Table 2
 
@@ -105,17 +116,28 @@ This tag will let you <strike>strikeout text</strike>.
 
 ## Horizontal Rules
 
-* * *
+`* * *`
+
+***
+
+`---`
 
 ---
 
-  _  _  _  _
+`_  _  _  _`
+
+_  _  _  _
+
+`---------------`
 
 ---------------
+
 
 ## Images
 
 Here comes an image!
+
+`!` `[` `smiley` `]` `(` `https://kramdown.gettalong.org/overview.png` `)`
 
 ![smiley](https://kramdown.gettalong.org/overview.png)
 
