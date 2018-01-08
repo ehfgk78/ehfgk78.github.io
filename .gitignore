@@ -2,10 +2,6 @@
 _site/
 .sass-cache/
 .jekyll-metadata
-assets/
-_posts/
-_data/
-_sass/
 
 ## pycharm
 .idea/
