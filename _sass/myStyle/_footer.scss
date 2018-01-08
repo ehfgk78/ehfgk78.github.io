@@ -1,0 +1,100 @@
+.the-footer {
+    font-size: .9em;
+    line-height: 1.4em;
+    padding: 10px 10px;
+    text-align: center;
+
+    a {
+        color: $color-text;
+        &:hover {
+            -webkit-transition: all .3s ease-in-out;
+               -moz-transition: all .3s ease-in-out;
+                 -o-transition: all .3s ease-in-out;
+                    transition: all .3s ease-in-out;
+            color: $color-hover;
+        }
+    }
+
+    p {
+        a {
+            padding: 2px 3px;
+            color: #0077CC;
+            border-bottom: 1px dotted #FFD18D;
+            &:visited {
+                color: #4A6B82;
+            }
+
+            &:hover {
+                color: $color-text;
+                background-color: $color-hover-transparent;
+            }
+        }
+    }
+    .about{
+        h3 {
+           margin-top: 0;
+           a:hover {
+               font-weight: bold;
+           }
+        }
+    }
+    .back-to-top {
+        border: 1px solid $color-text;
+        z-index: 99;
+        font-size: .9em;
+
+        position: fixed;
+        right: .25em;
+        bottom: .5em;
+
+        display: block;
+
+        padding: 1.2em 1.2em .2em;
+
+        text-decoration: none;
+
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .social-links {
+        $icon-size: 42px;
+        a {
+            display: inline-block;
+
+            width: $icon-size;
+            height: $icon-size;
+            margin: 1.5px;
+
+            background-size: $icon-size $icon-size;
+        }
+    }
+}
+
+@import 'simple-texture/common/social-icons';
+
+
+// from theme minima
+
+$spacing-unit: 60px;
+
+.footer-col {
+  float: left;
+  margin-bottom: $spacing-unit / 2;
+  padding-right: $spacing-unit / 2;
+}
+
+.footer-col-1 {
+  width: -webkit-calc(35% - (#{$spacing-unit} / 2));
+  width:         calc(35% - (#{$spacing-unit} / 2));
+}
+
+.footer-col-2 {
+  width: -webkit-calc(20% - (#{$spacing-unit} / 2));
+  width:         calc(20% - (#{$spacing-unit} / 2));
+}
+
+.footer-col-3 {
+  width: -webkit-calc(45% - (#{$spacing-unit} / 2));
+  width:         calc(45% - (#{$spacing-unit} / 2));
+}
+

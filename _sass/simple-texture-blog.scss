@@ -1,4 +1,6 @@
-@import 'simple-texture/blog/variables';
+//@import 'simple-texture/blog/variables';
+@import 'myStyle/variables';
+
 @import 'simple-texture/common/normalize';
 @import 'simple-texture/common/animate';
 @import 'simple-texture/common/fonts';
@@ -97,8 +99,19 @@ textarea {
     font-family: $fonts-body;
 }
 
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
 @import 'simple-texture/blog/overlay';
-@import 'simple-texture/blog/header';
-@import 'simple-texture/blog/footer';
-@import 'simple-texture/blog/content';
+//@import 'simple-texture/blog/header';
+@import 'myStyle/header';
+//@import 'simple-texture/blog/footer';
+@import 'myStyle/footer';
+
+//@import 'simple-texture/blog/content';
+@import 'myStyle/content';
+
 @import 'simple-texture/blog/responsive';

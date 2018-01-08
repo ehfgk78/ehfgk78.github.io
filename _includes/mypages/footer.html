@@ -1,0 +1,36 @@
+<footer class="the-footer">
+    <a href="#" class="internal back-to-top">
+        {{ site.data.i18n[site.lang].back_to_top }}
+    </a>
+    <div class="unit-foot">
+        <div class="unit-inner unit-foot-inner">
+            <div class="misc vcard">
+                <div class="about">
+
+                    <h4><a href="{{ site.url }}">{{ site.data.i18n[site.lang].about }}</a></h4>
+
+                    <div class="social-links">
+                    {% if site.author.email %}
+                        <a class="ico-gmail" href="mailto:{{ site.author.email }}" rel="me" target="_blank" title="{{ site.author.email }}"></a>
+                    {% endif %}
+                    <a class="ico-rss" href="{{ "/feed.xml" | relative_url }}" rel="me" target="_blank" title="feed"></a>
+                    {% for link in site.author.social_links %}
+                        {% if link.url %}
+                            <a class="ico-{{ link.name }}" href="{{ link.url }}" rel="me" target="_blank" title="{{ link.url }}"></a>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+
+                    {% if site.blog.footer_content %}
+                    <p>{{ site.blog.footer_content }}</p>
+                      <!--파이썬을 공부하다가 코딩에 급관심이 생겼습니다. -->
+                      <!--알거나(?) 알았다고 착각한 것(!!!)들을 기억의 한계 안으로 끄적입니다.-->
+                      <!--연락은 위 소셜 이모티콘을 참조하세요 -->
+                    {% endif %}
+
+                    {{ site.data.i18n[site.lang].theme_info }}
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
