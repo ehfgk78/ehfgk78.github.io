@@ -3,7 +3,7 @@ layout: post
 title:  "리눅스, 그 주요 명령어들"
 date:   2018-01-19
 categories: Ubuntu
-tags: Ubuntu, rsync, screen, tmux,  cron
+tags: [Ubuntu, rsync, screen, tmux,  cron]
 ---
 
 * Kramdown table of contents

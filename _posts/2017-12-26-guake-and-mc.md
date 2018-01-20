@@ -3,7 +3,7 @@ layout: post
 title:  "Ubuntu 터미널 Guake와 파일관리자 MC를 사용하기"
 date:   2017-12-26 20:20 +0900
 categories: Ubuntu
-tags: Ubuntu, guake, mc
+tags: [Ubuntu, guake, mc]
 ---
 
 * Kramdown table of contents

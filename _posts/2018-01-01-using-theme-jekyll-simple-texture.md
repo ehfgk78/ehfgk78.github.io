@@ -2,8 +2,8 @@
 layout: post
 title: "jekyll-simple-texture 설치하여 사용하기"
 description: "jekyll-simple-texture 설치하여 사용하기"
-categories: jekyll
-tags: jekyll
+categories: [jekyll]
+tags: [jekyll]
 redirect_from:
   - /2018/01/01/
 ---
