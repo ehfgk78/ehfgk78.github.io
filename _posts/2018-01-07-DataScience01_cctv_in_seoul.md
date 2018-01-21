@@ -7,6 +7,7 @@ tags: [Data-Science, pandas, matplotlib]
 redirect_from:
   - /2018/01/05/
 ---
+
 * Kramdown table of contents
 {:toc .toc}
 
