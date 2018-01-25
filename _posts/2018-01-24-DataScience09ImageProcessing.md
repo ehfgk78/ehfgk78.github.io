@@ -1,3 +1,15 @@
+---
+layout: post
+title:  "데이터 사이언스 09 이미지 처리-mahotas"
+date:   2018-01-24 00:20 +0900
+categories: [Data-Science]
+tags: [Data-Science, mahotas, scikit-learn ]
+---
+
+* Kramdown table of contents
+{:toc .toc}
+
+
 
 # 1. 참조
 
@@ -42,9 +54,7 @@ plt.imshow(image_raw)
 plt.show()
 ```
 
-
-![png](output_3_0.png)
-
+![png]({{ site.url }}/data/dataScience/09/output_3_0.png)
 
 
 ```python
@@ -59,9 +69,7 @@ plt.gray()
 plt.show()
 ```
 
-
-![png](output_5_0.png)
-
+![png]({{ site.url }}/data/dataScience/09/output_5_0.png)
 
 
 ```python
@@ -79,8 +87,7 @@ plt.imshow( image_grey>thresholding )
 plt.show()
 ```
 
-
-![png](output_7_0.png)
+![png]({{ site.url }}/data/dataScience/09/output_7_0.png)
 
 
 ## 2) 블러링 
@@ -103,9 +110,7 @@ plt.imshow(im16)
 plt.show()
 ```
 
-
-![png](output_10_0.png)
-
+![png]({{ site.url }}/data/dataScience/09/output_10_0.png)
 
 
 ```python
@@ -114,8 +119,7 @@ plt.imshow( im16>thresholding )
 plt.show()
 ```
 
-
-![png](output_11_0.png)
+![png]({{ site.url }}/data/dataScience/09/output_11_0.png)
 
 
 # 4. 초점 맞추기
@@ -132,8 +136,7 @@ plt.imshow(lena_raw)
 plt.show()
 ```
 
-
-![png](output_14_0.png)
+![png]({{ site.url }}/data/dataScience/09/output_14_0.png)
 
 
 
@@ -199,9 +202,7 @@ plt.plot( r[0] )
 plt.show()
 ```
 
-
-![png](output_18_0.png)
-
+![png]({{ site.url }}/data/dataScience/09/output_18_0.png)
 
 
 ```python
@@ -209,8 +210,7 @@ plt.plot( r12[0] )
 plt.show()
 ```
 
-
-![png](output_19_0.png)
+![png]({{ site.url }}/data/dataScience/09/output_19_0.png)
 
 
 
@@ -268,8 +268,7 @@ plt.imshow(ringed)
 plt.show()
 ```
 
-
-![png](output_24_0.png)
+![png]({{ site.url }}/data/dataScience/09/output_24_0.png)
 
 
 
@@ -279,9 +278,7 @@ plt.imshow( im12 )
 plt.show()
 ```
 
-
-![png](output_25_0.png)
-
+![png]({{ site.url }}/data/dataScience/09/output_25_0.png)
 
 
 ```python
@@ -293,8 +290,7 @@ plt.show()
 ```
 
 
-![png](output_26_0.png)
-
+![png]({{ site.url }}/data/dataScience/09/output_26_0.png)
 
 
 ```python
@@ -305,8 +301,8 @@ plt.imshow(ringed)
 plt.show()
 ```
 
+![png]({{ site.url }}/data/dataScience/09/output_27_0.png)
 
-![png](output_27_0.png)
 
 
 # 5. 이미지 분류
@@ -588,16 +584,14 @@ plotImages(0)
 ```
 
 
-![png](output_52_0.png)
-
+![png]({{ site.url }}/data/dataScience/09/output_52_0.png)
 
 
 ```python
 plotImages(1)
 ```
 
-
-![png](output_53_0.png)
+![png]({{ site.url }}/data/dataScience/09/output_53_0.png)
 
 
 
@@ -605,24 +599,19 @@ plotImages(1)
 plotImages(11)
 ```
 
-
-![png](output_54_0.png)
-
+![png]({{ site.url }}/data/dataScience/09/output_54_0.png)
 
 
 ```python
 plotImages(31)
 ```
 
-
-![png](output_55_0.png)
-
+![png]({{ site.url }}/data/dataScience/09/output_55_0.png)
 
 
 ```python
 plotImages(61)
 ```
 
-
-![png](output_56_0.png)
+![png]({{ site.url }}/data/dataScience/09/output_56_0.png)
 
