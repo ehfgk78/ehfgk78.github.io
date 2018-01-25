@@ -1,3 +1,16 @@
+---
+layout: post
+title:  "데이터 사이언스 08 자연어 처리(3)-practice "
+date:   2018-01-23 22:20 +0900
+categories: [Data-Science]
+tags: [Data-Science, KoNLPy, NLTK, wordcloud, gensim]
+---
+
+* Kramdown table of contents
+{:toc .toc}
+
+
+
 
 # 1. 모듈
 
@@ -48,6 +61,10 @@ import time
 
 # 2. Base URL, referer header
 
+
+
+![png]({{ site.url }}/data/dataScience/08(3)/1.png)
+
 > [Changing the referrer URL in python requests - Stack Overflow](https://stackoverflow.com/questions/20837786/changing-the-referrer-url-in-python-requests)
 
 > [HTTP referer- 위키백과](https://en.wikipedia.org/wiki/HTTP_referer)
@@ -92,6 +109,10 @@ soup = BeautifulSoup(
 # 3. Derived URL - 지식인 답변 페이지들
 
 
+
+![png]({{ site.url }}/data/dataScience/08(3)/1(2).png)
+
+
 ```python
 query_links = soup.find_all('dt')
 query_links[0]
@@ -116,6 +137,9 @@ query_links[0].a['href']
 
     'http://kin.naver.com/qna/detail.nhn?d1id=7&dirId=70122&docId=290302927&qb=7Jes7LmcIOyEoOusvA==&enc=utf8&section=kin&rank=1&search_sort=0&spq=1'
 
+
+
+![png]({{ site.url }}/data/dataScience/08(3)/3.png)
 
 
 
@@ -330,7 +354,7 @@ plt.show()
 ```
 
 
-![png](output_23_0.png)
+![png]({{ site.url }}/data/dataScience/08(3)/output_23_0.png)
 
 
 ---
@@ -398,7 +422,9 @@ plt.show()
 ```
 
 
-![png](output_27_0.png)
+
+![png]({{ site.url }}/data/dataScience/08(3)/output_27_0.png)
+
 
 
 ---
