@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "데이터 사이언스 07 시계열 데이터 01- statsmodels"
+title:  "데이터 사이언스 07 시계열 데이터 01-statsmodels"
 date:   2018-01-21 20:20 +0900
 categories: [Data-Science]
 tags: [Data-Science, statsmodels, ARIMA모형]

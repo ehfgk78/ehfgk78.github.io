@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "데이터 사이언스 04 웹자료 가져오기(2)- Selenium "
+title: "데이터 사이언스 04 웹자료 가져오기(2)-Selenium "
 date: 2018-01-21 01:20 +0900
 categories: [Data-Science]
 tags: [Data-Science, Selenium]

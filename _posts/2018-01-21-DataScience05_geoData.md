@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "데이터 사이언스 05 지도데이터 처리"
+title: "데이터 사이언스 05 지도데이터 처리1"
 date: 2018-01-21 01:30 +0900
 categories: [Data-Science]
 tags: [Data-Science, Square tile grid map, SHP, GeoJSON]

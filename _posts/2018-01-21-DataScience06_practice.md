@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "데이터 사이언스 06 실전연습 - 친환경건설자재"
+title:  "데이터 사이언스 06 실전연습-친환경건설자재"
 date: 2018-01-21 02:00 +0900
 categories: [Data-Science]
 tags: [Data-Science, openpyxl]
