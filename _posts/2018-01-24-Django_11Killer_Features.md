@@ -216,7 +216,7 @@ settings/
 
 <br/>
 
-## 8) munin이나 statds를 process mornitoring에 사용할 것
+## 8) `munin`이나 `statds`를 process mornitoring에 사용할 것
 * 관련 코드와 사이트는 아래와 같다. 
 
 >  [Munin](http://munin-monitoring.org/)
@@ -226,7 +226,7 @@ settings/
 
 <br/>
 
-## 9) jammit for static asset compression 사용 
+## 9) `jammit` for static asset compression 사용 
 * jammit은  static asset(css, javaScript 등)을 압축하는 모듈인데 ruby on rails에서 사용도니다. 그러나 python에서도 사용할 수 있는데 관련 사이트는 아래와 같다.
  
 > [Jammit](http://documentcloud.github.io/jammit/)
