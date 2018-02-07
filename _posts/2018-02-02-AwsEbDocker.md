@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "AWS ElasticBeanstalk( Docker플랫폼 )로 Django 배포하기"
+title:  "AWS ElasticBeanstalk( Docker플랫폼 )으로 Django 배포하기"
 date:  2018-02-02 02:20 +0900
 categories: [Django, AWS, Docker]
 tags: [ Django, AWS, Docker]
@@ -8,13 +8,14 @@ tags: [ Django, AWS, Docker]
 
 * Kramdown table of contents
 {:toc .toc}
-
 <br/>
 <br/>
 
-# 
+---
 
-Docker 공식 문서:  https://docs.docker.com/get-started/
+# 참조 
+
+Docker 공식 문서 [ https://docs.docker.com/get-started/ ](https://docs.docker.com/get-started/) 
 
 [초보를 위한 도커 안내서 (subicura)](https://subicura.com/2017/01/19/docker-guide-for-beginners-1.html)
 
@@ -28,32 +29,65 @@ Docker 공식 문서:  https://docs.docker.com/get-started/
 
 [AWS 전문가 되기](https://brunch.co.kr/magazine/devops)
 
-## 전체 모습
+<br/>
 
-```sh
-(Front)'service.com'
-(Backend)'api.service.com'
-        │
-   <HTTP/HTTPS>요청      
-        ├─── Route53 #도메인주소 설정 
-       ELB #SSL설정:ACM, #RDS, S3설정 
-        │
-       EC2── Nginx #HTTPS리다이렉션 설정 
-              │
-            Docker⟝Nginx⟝uwSGI⟝Django #Health Check
-```
+<br/>
+
+---
+
+# 0. 서버의 전체 구성
+
+<br/>
+
+![AWS_Elastic_Beanstalk_IP_flow]({{ site.url }}/data/AwsEB/0-AWS_EB_IP_flow.png) 
+
+**그림**_도커 플랫폼 AWS  Elastic Beanstalk의 서비스 구성 
+
+<br/>
+
+![AWS_Elastic_Beanstalk_IP_flow]({{ site.url }}/data/AwsEB/0-AWS_structure2.png) 
+
+**그림**_AWS_서비스 구성 
+
+<br/> 
+
+<br/>
+
+---
+
+# 1. 도커 
+<br/>
+​	도커(Docker)는 리눅스 응용프로그램들을 **소프트웨어 컨테이너** 안에 배치시키는 일을 자동화하는 오픈 소스 프로젝트이다.  
+
+* 도커 컨테이너( **Container** )는 **<u>어떤 소프트웨어와 이를 실행하는데 필요한 모든 것을 완전한 파일 시스템 안에 감싼다.</u>**   
+* 감싸는 것들에는 코드, 런타임, 시스템 도구 , 시스템 라이브러리 등 서버에 설치되는 무엇이든 아우른다.  
+* 도커의 이러한 기능은 **<u>실행 중인 환경과 관계없이 언제나 동일하게 실행될 것을 보증</u>**한다. 
+
+
+<br/>
+이 포스트에서는, 
+
+*  **Docker Container**  안에서  Django 실행에 필요한 모든 것들 ( Ubuntu ➜ zsh( + oh-my-zsh ➜ pyenv ➜ python 3.6.3 ➜ Django ➜ uWSGI + Nginx 등)을 설치하여 실행해보고, 
+*  이를  **Docker image**로 만들어  **Docker Hub**에 업로드할 것이다. 
+*  이후  **AWS ElasticBeanstalk**을 이용하여 **Django를 자동으로 배포**할 것이다.  
+*  Docker image는  **Dockerfile**을 이용하여 자동으로 생성(Build)되도록 할 것이다. 
+
+크게 <u>Dockerfile을 만드는 작업</u>과  <u>AWS ElasticBeanstalk(도커플랫폼) 환경을 만드는 작업</u> 두 부분에 중점을 두어 이 포스트를 작성하였다. 
+
+<br/>
+<br/>
+
+---
+
+## 1) 도커 설치 ⚿
+
+> ✛ [curl](https://curl.haxx.se/)  + [curl 설치 및 사용법 - HTTP GET/POST, REST API 연계등](https://www.lesstif.com/pages/viewpage.action?pageId=14745703)
+
+> ✛ [커맨드라인 환경에서 REST API (HTTP) 요청 보내기 (cURL, resty, httpie, Vim REST Control)](https://bakyeono.net/post/2016-05-02-rest-api-client-for-cli.html)  
 
 
 
-# 도커 
-
-​	도커(Docker)는 리눅스 응용프로그램들을 소프트웨어 컨테이너 안에 배치시키는 일을 자동화하는 오픈 소스 프로젝트이다.  도커 컨테이너(`Container`)는 **<u>어떤 소프트웨어와 이를 실행하는데 필요한 모든 것을 완전한 파일 시스템 안에 감싼다.</u>**  여기에는 코드, 런타임, 시스템 도구 , 시스템 라이브러리 등 서버에 설치되는 무엇이든 아우른다.  도커의 이러한 기능은 실행 중인 환경과 관계없이 언제나 동일하게 실행될 것을 보증한다. 
-
-여기에서는 `Docker Container`  안에서  Django 실행에 필요한 모든 것들 ( Ubuntu ➜ zsh( + oh-my-zsh ➜ pyenv ➜ python 3.6.3 ➜ Django ➜ uWSGI + Nginx)을 설치하여 실행해보고, 이를 `Docker image`로 만들어  `Docker Hub`에 업로드한다.  여기에 `AWS ElasticBeanstalk`을 이용하여 Django를 자동으로 배포할 것이다.  Docker image를 만드는 과정은 `Dockerfile`을 이용하여 자동으로 생성(Build)되도록 할 것이다. 
-
-
-
-## ⚿ 도커 설치
+<br/>
 
 ```sh
 # docker 설치
@@ -70,25 +104,29 @@ sudo usermod -aG docker 유저명
 docker run hello-world
 ```
 
-✛ [curl](https://curl.haxx.se/)  + [curl 설치 및 사용법 - HTTP GET/POST, REST API 연계등](https://www.lesstif.com/pages/viewpage.action?pageId=14745703)
+<br/>
 
-✛ [커맨드라인 환경에서 REST API (HTTP) 요청 보내기 (cURL, resty, httpie, Vim REST Control)](https://bakyeono.net/post/2016-05-02-rest-api-client-for-cli.html) 
+<br/>
+
+---
+
+## 2) Ubuntu16.04 이미지    
+
+<br/> 
 
 
+1) 문법 - docker image 다운로드 및 docker container 실행
+*  {% raw %} **docker  run [옵션s]  이미지[:TAG][ COMMAND]  [ARG ...]** {% endraw %}
+*  옵션 설명
+   * `--rm`  프로세스 종료시 해당 이미지의 컨테이너 자동 제거
+   * `-it`  도커 컨테이너 내의 실행을 현재 터미널에서 입력(interactive terminal)
+   * `-p <host 포트>:<container 포트>`  포트 연결(포워딩)
+   * ` -d` 백그라운드 모드, `-e`컨테이너 내 환경변수 설정, `--link`컨테이너연결
+   * `--name` 컨테이너 이름 설정 
+   * ` -v`  호스트와 컨테이너의 디렉토리 연결(마운트)
 
-## Ubuntu 16.04 이미지 
 
-```sh
-# 문법
-docker run [옵션s] 이미지[:TAG|@DIGEST] [COMMAND] [ARG ...]
-# 옵션s :: 설명
-## --rm :: 프로세스 종료시 해당 이미지의 컨테이너 자동 제거
-## -it :: 도커 컨테이너 내의 실행을 현재 터미널에서 입력(interactive terminal)
-## -p <host 포트>:<container 포트>  :: 포트 연결(포워딩)
-## -d:: 백그라운드 모드, -e:: 컨테이너 내 환경변수 설정, --link::컨테이너연결
-## --name:: 컨테이너 이름 설정 
-## -v:: 호스트와 컨테이너의 디렉토리 연결(마운트)
-```
+2) 실제 **실행** 을 해보면 다음과 같다. 
 
 ```sh
 # ubuntu 이미지 검색
@@ -101,13 +139,22 @@ docker run ubuntu:16.04
 docker run --rm -it ubuntu:16.04 bin/bash
 ```
 
+<br/>
 
+<br/>
 
-## ⛺ Dockerfile.base
+---
 
-**Pycharm Plug-in** 
+## 3) `Dockerfile.base`  ⛺
 
-`Docker Integration`
+<br/> 
+
+* **Pycharm Plugin -  Docker Integration** :  pycharm을 통합개발IDE로 사용한다면 위 플러그인은  Dockerfile을 인식하고 Dockerfile의 문법을 자동으로 완성해주는 기능을 제공한다. 
+* **Dockerfile.base,  Dockerfile.local, Dockerfile로 나누어 작성하는 이유**가 중요하다. 
+  *  첫째는 웹 개발 단계에서 로컬에서 개발하다가 AWS 등에 배포하는 단계로 넘어가는데  각 단계마다 프로그램 환경이 다르기 때문에  그에 맞추어 Dockerfile을 작성해야할 필요성이 있다.  
+  *  둘째는 AWS ElasticBeanstalk(줄여서 'EB'라고 표현하겠다.)에  Django를 배포하는 과정(`eb deploy`)에서 EB는 Dockerfile을 참조하여 Docker 환경을 구축(빌드, build)한다.  이 경우 OS 설치(여기서는 우분투16.04LTS)부터 빌드하면  배포시간이 너무 길어진다.  그 시간을 줄이기 위해서 Dockerfile.base로 구축한 Docker image를  Docker Hub를 통하여 이용하면, EB는 Dockerfile을 통하여 Django 배포에만 집중할 수 있다.   
+  *  Dockerfile.base에서 구축하는 환경은 공개할 수 있지만  Dockerfile에서 구축하는 Django 환경은 비공개로 해야한다는 점에서 위 방법은 타당하며, 앞으로의 전개는 이러한 공개/비공개 이슈를 적정하게 반영할 것이다. 
+* Dockerfile.base의 작성은 아래와 같다.  명령을 한 줄씩 실행하며 Test를 하고 Dockerfile.base를 완성시킨다.  구축 환경의 내용을 살펴보면 공개해도 되는 내용들임을 알  수 있다. 
 
 ```dockerfile
 FROM        ubuntu:16.04
@@ -156,118 +203,159 @@ RUN  /root/.pyenv/versions/app/bin/pip install  \
      -r /srv/requirements.txt
 ```
 
-**base 이미지 빌드** 
+<br/>
+
+* **base 이미지 빌드** 
+  * 문법  **docker build  [빌드위치]  -f [도커파일이름]  -t [이미지 태그이름]** 
+  * 현재 디렉토리(.)에  Dockerfile.base에 따라 gildong/base 이미지를 빌드하는 도커 명령어는 다음과 같다. 
+
+  ```sh
+  ➜  docker build . -f Dockerfile.base -t gildong/base
+  ```
+
+
+<br/>
+
+* **이미지 레이어** -  다른 가상머신(Virtual Machine)과 다르게, Docker가 유연하고 가벼운 이유가 이미지 레이어이다.  
+
+  * 위 명령어를 실행하면 아래와 같은 로그가 나타난다. 
+
+  ```tex
+  Sending build context to Docker daemon  18.11MB  #1
+  Step 1/19 : FROM ubuntu:16.04                    #2    
+   ---> 747cb2d60bbe                               #3
+  Step 2/19 : MAINTAINER nachwon@naver.com         #4
+   ---> Running in 4fd03f3be194                    #5
+   ---> feabda9f3e02                               #6
+  Removing intermediate container 4fd03f3be194     #7
+  .
+  .
+  Successfully built 975e4869f7c3                  #8
+  Successfully tagged base:latest                  #9
+  ```
+  * 위 로그의 각 단계(Step 1/19,  Step 2/19, ... 등)별로 이미지 레이어가 만들어진다.  위 로그에 대한 설명는 아래 테이블에 정리한다. 
+
+  | 번호      | 설명                                       |
+  | ------- | ---------------------------------------- |
+  | **\#1** | 처음 빌드를 시작하면 명령을 실행한 디렉토리의 파일들 (Build contest) 을 Docker 서버로 전송한다. |
+  | **\#2** | FROM ubuntu:16.04 명령을 실행한다.              |
+  | **\#3** | 위 명령의 실행 결과를 이미지 747cb2d60bbe 로 만든다. 이 경우에는 ubuntu:16.04 이미지를 가져오는 것이므로 우분투 이미지의 ID인 747cb2d60bbe이 그대로 표시된다. |
+  | **\#4** | MAINTAINER 명령을 실행한다.                     |
+  | **\#5** | 위 명령을 4fd03f3be194 라는 임시 컨테이너를 만들어 그 안에서 실행한다. |
+  | **\#6** | 명령의 실행 결과를 이미지 feabda9f3e02 로 저장한다.      |
+  | **\#7** | 명령 실행을 위해 만들었던 임시 컨테이너 4fd03f3be194를 삭제한다. |
+  | **\#8** | 가장 마지막 명령을 실행한 결과로 생성된 이미지는 975e4869f7c3 이다. 이 이미지가 최종 결과인 base 이미지인 것이다. |
+  | **\#9** | base 이미지에 latest 라는 태그를 붙여준다.            |
+
+  ​
+
+  *  임시 컨테이너 생성  ➔  다음 명령 실행  ➔  **실행 결과를 이미지로 저장**  ➔ 임시 컨테이너 삭제 
+  *  이렇게  한 번의 반복으로 생성되는 이미지를  **이미지 레이어**라고 한다.  각 명령의 실행결과는 **레이어 단위**로 저장되므로 <u>설치과정을 처음부터 다시 할 필요없고, 특정 시점의 레이어로 돌가갈 수 있다.</u>
+
+
+<br/>
+
+<br/>
+
+---
+
+## 4) Docker Hub 
+
+<br/>
+
+ Docker Hub는 Docker image를 공개적으로 저장하는 원격 저장소이다. 
+
+* Docker Hub를 알아야 하는 이유 
+
+  * **AWS Elastic Beanstalk**은 Dockerfile과 git commit을 기준으로 배포한다. EB가 Dockerfile의 base 이미지를 인식할 수 있도록 공개저장소인 Docker Hub에 업로드해야한다. 
+  * 공개 원격저장소인 DockerHub 대신 **Docker-Registry**를 사용할 수 있으나  이 포스트에서는 설명하지 않는다. 
+
+  ```dockerfile
+  FROM  <Docker Hub 사용자 계정>/<이미지 이름>:<태그>
+  ... 
+  ```
+
+  ​
+
+
+* Docker Hub에 회원 가입 후  로그인 
 
 ```sh
-docker build -t ehfgk78/base -f Dockerfile.base .
-## -t 이미지명 태그
-## -f 이미지를 빌드할 Dockerfile명 
-## 마지막 .은 이미지를 생성할 경로가 현재 디렉토리라는 뜻 
-```
-
-**이미지 레이어** 
-
-위 `Dockerfile.base`를 실행하면 뜨는 로그를 살펴보자
-
-```tex
-Sending build context to Docker daemon  18.11MB  #1
-Step 1/19 : FROM ubuntu:16.04                    #2    
- ---> 747cb2d60bbe                               #3
-Step 2/19 : MAINTAINER nachwon@naver.com         #4
- ---> Running in 4fd03f3be194                    #5
- ---> feabda9f3e02                               #6
-Removing intermediate container 4fd03f3be194     #7
-.
-.
-Successfully built 975e4869f7c3                  #8
-Successfully tagged base:latest                  #9
-```
-
-- **`#1`**: 처음 빌드를 시작하면 명령을 실행한 디렉토리의 파일들 (Build contest) 을 Docker 서버로 전송한다.
-- **`#2`**: FROM ubuntu:16.04 명령을 실행한다.
-- **`#3`**: 위 명령의 실행 결과를 이미지 747cb2d60bbe 로 만든다. 이 경우에는 ubuntu:16.04 이미지를 가져오는 것이므로 우분투 이미지의 ID인 747cb2d60bbe이 그대로 표시된다.
-- **`#4`**: MAINTAINER 명령을 실행한다.
-- **`#5`**: 위 명령을 4fd03f3be194 라는 임시 컨테이너를 만들어 그 안에서 실행한다.
-- **`#6`**: 명령의 실행 결과를 이미지 feabda9f3e02 로 저장한다.
-- **`#7`**: 명령 실행을 위해 만들었던 임시 컨테이너 4fd03f3be194를 삭제한다.
-- **`#8`**: 가장 마지막 명령을 실행한 결과로 생성된 이미지는 975e4869f7c3 이다. 이 이미지가 최종 결과인 base 이미지인 것이다.
-- **`#9`**: base 이미지에 latest 라는 태그를 붙여준다.
-
- `임시 컨테이너 생성` > `다음 명령 실행` > `실행 결과를 이미지로 저장` > `임시 컨테이너 삭제`
-
-이렇게  한 번의 반복으로 생성되는 이미지를 `이미지 레이어`라고 한다.  각 명령의 실행결과는 `레이어 단위`로 저장되므로 설치과정을 처음부터 다시 할 필요없고, 특정 시점의 레이어로 돌가갈 수 있다. 
-
-
-
-## Docker Hub 
-
-### Docker-Registry
-
-```dockerfile
-# AWS EB는 Dockerfile과 git commit을 기준으로 배포한다. EB가 Dockerfile의 base 이미지를 인식할 수 있도록 공개저장소인 Docker Hub에 업로드해줘야 한다. DockerHub가 아니더라도 가능하다. 
-FROM  <Docker Hub 사용자 계정>/<이미지 이름>:<태그>
-... 
-```
-
-```sh
-$ docker login
-Login with your Docker ID to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com to create one.
+➔ docker login
+Login with your Docker ID to push and pull images from Docker Hub. 
+If you don't have a Docker ID, head over to https://hub.docker.com to create one.
 Username (****): ******
 Password: 
 Login Succeeded
 ```
 
+<br/>
+
+* Docker Hub에  Docker image 올리기 
+
 ```sh
 # base이미지에 새 태그명 azelf/base를 붙인다
-$ docker tag base azelf/base
+➔ docker tag base azelf/base
 
 # azelf/base저장소에 해당 이미지를 push
-$ docker push <Docker Hub 사용자 계정>/<이미지 이름>:<태그>
-	$ docker push azelf/base
+➔ docker push <Docker Hub 사용자 계정>/<이미지 이름>:<태그>
+➔ docker push azelf/base
 ```
 
+<br/>
 
+<br/>
 
-## Django settings
+---
 
-Settings 분리 참조 
+## 5) Django settings
+
+<br/>
+
+Django Settings 분리 참조 
 
 ```sh
-instagram_project
-  .config_secret
-      settings_common.json
-      settings_local.json
-      settings_dev.json
-  instagram
-      config
-          settings
-              __init__.py  
-              base.py 
-              local.py
-              dev.py 
-              deploy.py 
-      wsgi 
-          __init__.py
-          local.py
-          dev.py
-      urls # media_root
+<project container>
+ ├─ .config_secret
+ │    ├─ settings_common.json
+ │    ├─ settings_local.json
+ │    └─ settings_dev.json
+ └─ <Django project>
+      └─ config/
+          ├─ settings/
+          │   ├─ __init__.py  
+          │   ├─ base.py 
+          │   ├─ local.py
+          │   ├─ dev.py 
+          │   └─ deploy.py
+          ├─ wsgi/
+          │   ├─ __init__.py
+          │   ├─ local.py
+          │   └─ dev.py
+          └─ urls # media_root
 ```
 
-## local Nginx, uWSGI 설정
+<br/>
 
-settings 분리 참조 
+### local Nginx, uWSGI 설정
 
-**전체 모습** 
+* Django settings 분리 참조 
+* **전체 모습** 
 
-```ini
-localhost:8000──Docker[-80─Nginx─<소켓>─uWSGI─Django]
-                          ──┿──       ──┿──
-                         supervisor   supervisor
-```
+![local Nginx, uWSGI 설정]({{ site.url }}/data/AwsEB/0-local_nginx_uwsgi.png)
 
+<br/>
 
+<br/>
 
-## ⛺ Dockerfile.local 
+---
+
+## 6) `Dockerfile.local` ⛺  
+
+<br/>
+
+* base 이미지로부터 시작한다.  로컬 환경에서 빌드하므로 Docker Hub의 이미지를 쓸 필요 없다. 
+* local DataBase는 sqlite3로 한다.  postgresql은 마이스레이션에서  문제가 발생하는 경향이 있다. 
 
 ```dockerfile
 FROM  base
@@ -300,29 +388,34 @@ CMD  supervisord -n
 
 # manage.py
 WORKDIR  /srv/app/instagram
-#RUN  /root/.pyenv/versions/app/bin/python manage.py collectstatic --noinput
-#RUN  /root/.pyenv/versions/app/bin/python manage.py migrate --noinput
+RUN  /root/.pyenv/versions/app/bin/python manage.py collectstatic --noinput
+RUN  /root/.pyenv/versions/app/bin/python manage.py migrate --noinput
 
 # 개방 port
 EXPOSE  80 8012
 ```
 
+<br/>
 
+<br/>
 
-## ⛺ Dockerfile
+---
+
+## 7) `Dockerfile.dev`  ⛺ 
+
+<br/>
+
+* 도커파일은 개발 단계마다 다르게 설정된다. 아래 예시 파일에서 기본적인 사용법과 의미를 파악하는데에 주력한다.  단순히 복사/붙이기를 해서는 안된다. 
 
 ```dockerfile
 FROM  Greg/base
-MAINTAINER  Greg@gmail.com
+MAINTAINER  Greg@email.com
 
 ENV  LANG C.UTF-8
-#⇒ Dockerfile.local
-  # ENV  DJANGO_SETTINGS_MODULE=config.settings.local 불필요함 
-#⇒ Dockerfile (dev/deploy)
-  ENV  DJANGO_SETTINGS_MODULE=config.settings.dev
+ENV  DJANGO_SETTINGS_MODULE=config.settings.dev
 
 # 파일 복사 및 requirements 설치 - pip update용
-## 주의! .config_secret등 비밀설정파일이 복사되므로 공개에 주의해야 한다. 
+## 주의! .config_secret등 비밀설정파일이 복사되므로 비밀공개에 주의해야 한다. 
 COPY  . /srv/app
 RUN  /root/.pyenv/versions/app/bin/pip install \
      -r  /srv/app/requirements.txt
@@ -332,13 +425,8 @@ WORKDIR  /srv/app
 RUN  pyenv local app
 
 # NginX
-#⇒ Dockerfile.local
-RUN cp /srv/app/.config/local/nginx/nginx.conf /etc/nginx/nginx.conf
-RUN cp  /srv/app/.config/local/nginx/app.conf /etc/nginx/sites-available/
-#⇒ Dockerfile.dev
 RUN cp /srv/app/.config/dev/nginx/nginx.conf /etc/nginx/nginx.conf
 RUN cp  /srv/app/.config/dev/nginx/app.conf /etc/nginx/sites-available/
-#⇒ Dockerfile.deploy 위와 다를 바 없다. 
 
 RUN  rm -rf /etc/nginx/sites-enabled/*
 RUN  ln  -sf /etc/nginx/sites-available/app.conf \
@@ -350,11 +438,58 @@ WORKDIR  /srv/app/mysite
 RUN  /root/.pyenv/versions/app/bin/python manage.py collectstatic --noinput
 RUN  /root/.pyenv/versions/app/bin/python manage.py migrate --noinput
 # supervisor
-#⇒ Dockerfile.local
-RUN cp /srv/app/.config/local/supervisor/* /etc/supervisor/conf.d
-#⇒ Dockerfile.dev
 RUN cp /srv/app/.config/dev/supervisor/* /etc/supervisor/conf.d
-#⇒ Dockerfile.deploy 위와 다를 바 없음 
+CMD  supervisord -n
+
+# docker의 port개방::  Nginx 설정파일 app.conf 주의!
+## server {
+##     listen 80;
+## }
+EXPOSE  80 8012
+```
+
+<br/>
+
+<br/>
+
+---
+
+## 8)  `Dockerfile.deploy`  ⛺
+
+<br/> 
+
+```dockerfile
+FROM  Greg/base
+MAINTAINER  Greg@email.com
+
+ENV  LANG C.UTF-8
+ENV  DJANGO_SETTINGS_MODULE=config.settings.deploy
+
+# 파일 복사 및 requirements 설치 - pip update용
+## 주의! .config_secret등 비밀설정파일이 복사되므로 비밀공개에 주의해야 한다. 
+COPY  . /srv/app
+RUN  /root/.pyenv/versions/app/bin/pip install \
+     -r  /srv/app/requirements.txt
+
+# pyenv local 설정
+WORKDIR  /srv/app
+RUN  pyenv local app
+
+# NginX- deploy
+RUN cp /srv/app/.config/deploy/nginx/nginx.conf /etc/nginx/nginx.conf
+RUN cp  /srv/app/.config/deploy/nginx/app.conf /etc/nginx/sites-available/
+
+RUN  rm -rf /etc/nginx/sites-enabled/*
+RUN  ln  -sf /etc/nginx/sites-available/app.conf \
+         /etc/nginx/sites-enabled/app.conf
+# uWSGI
+RUN  mkdir -p  /var/log/uwsgi/app
+# manage.py
+WORKDIR  /srv/app/mysite
+RUN  /root/.pyenv/versions/app/bin/python manage.py collectstatic --noinput
+RUN  /root/.pyenv/versions/app/bin/python manage.py migrate --noinput
+# supervisor-deploy
+RUN cp /srv/app/.config/deploy/supervisor/* /etc/supervisor/conf.d
 CMD  supervisord -n
 
 # docker의 port개방::  Nginx 설정파일 app.conf 주의!
@@ -366,9 +501,17 @@ EXPOSE  80 8012
 
 
 
-## ⏬ docker-run.sh
+<br/>
 
-Dockerfile 실행을  shell script로 자동화 한다. 
+<br/>
+
+---
+
+## 9)  `docker-run.sh`  ⏬ 
+
+<br/>
+
+* docker-run.sh 파일 - Dockerfile 실행을  shell script로 자동화 한다. 
 
 ```sh
 #!/usr/bin/env bash
@@ -385,9 +528,15 @@ $ chomod 755 docker-run.sh
 $ ./docker-run 
 ```
 
+<br/>
 
+<br/>
 
-## ⛗ 도커 명령어s
+---
+
+## 10) 도커 명령어 모음  
+
+<br/>
 
 ```shell
 # docker build 
@@ -423,9 +572,13 @@ $ docker images
 $ docker ps -a
 ```
 
+<br/>
 
+<br/>
 
-# ElasticBeanstalk 
+# 2. ElasticBeanstalk 
+
+<br/>
 
 [공식문서](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/Welcome.html) http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/Welcome.html
 
@@ -433,7 +586,11 @@ Docker를 이용한 배포에 대해 최근  **ECS**를 쓰이고 있다.  여�
 
 [ECS( Amazon EC2 Container Service )](https://aws.amazon.com/ko/ecs/)
 
-## IAM
+<br/>
+
+## 1) IAM
+
+<br/>
 
 `서비스` ➫ `Add user` : EB-User: ☑Programmatic access ➫ `permission`  ➫ `Attach existing policies directly` ➫ ☑ AWSElasticBeanstalkFullAccess ➫ Review ➫ `Create user` ➫  **`Access key ID`, `Secret access key`** 
 
@@ -448,9 +605,11 @@ aws_access_key_id = *********
 aws_secret_access_key = **************
 ```
 
+<br/>
 
+<br/>
 
-## awsebcli
+## 2) awsebcli
 
 ```shell
 # Elastic Beanstalk 명령줄 인터페이스(EB CLI)
@@ -493,11 +652,15 @@ sudo docker exec -it [컨테이너 ID] /bin/zsh
 (app)➡ cat /var/log/eb-activity.log
 ```
 
-###  eb init /	eb create / eb deploy / eb open /eb ssh
+* eb init /	eb create / eb deploy / eb open /eb ssh
 
+<br/>
 
+<br/>
 
-##  `.ebignore`
+##  3) `.ebignore`
+
+<br/>
 
 ​    EB는 이미지 안에 Dockerfile을 찾아 읽고,  `eb deploy`는  `git commit`한 파일들을 기준으로 배포한다.  **중요한 secret 정보**(예를들어, `.config_secret`)들은 GitHub에 공개할 수 없으므로 `.gitignore`에 담는다.   `git commit` 할 수 없으므로, EB는 위 정보들을 인식할 수 없어서 다음과 같은 Error가 발생한다. 
 
@@ -526,7 +689,13 @@ fileNotFoundError: [Errno 2] No Such file or directory: '/srv/app/.config_secret
 ...
 ```
 
-## RDS 인바운드 규칙 
+<br/>
+
+<br/>
+
+## 4) RDS 인바운드 규칙 
+
+<br/>
 
 ```sh
 # EB docker의 error상황
@@ -542,17 +711,23 @@ AWS `서비스` > `EC2` > `보안그룹`:  자동생성된 EB 보안 그룹 `aws
 
 인바운드규칙 편집 >  `PostgreSQL` `5432`  `사용자지정`  <그룹ID>
 
+<br/>
 
+<br/>
 
-## S3 
+## 3) S3 
 
-[S3 버킷 사용하기](http://docs.aws.amazon.com/ko_kr/AmazonS3/latest/dev/UsingBucket.html) 
+>  [S3 버킷 사용하기](http://docs.aws.amazon.com/ko_kr/AmazonS3/latest/dev/UsingBucket.html) 
 
-### IAM 권한부여
+<br/>
+
+1)  **IAM 권한부여 ** 
 
 `IAM` ➔ `Users` EB-User ➔ `Add permissions` :  Attach existing policies directly :  **AmazonS3FullAccess**
 
-###   버킷 생성  
+<br/> 
+
+2)  **버킷 생성** 
 
 ```python
 # 기존 버킷 이용하기 : 새 객체 업로드 하기 
@@ -567,9 +742,15 @@ ipython
              'LocationConstraint': 'ap-northeast-2'})  
 ```
 
+<br/>
+
+<br/>
 
 
-## ACM 
+
+## 4) ACM 
+
+<br/>
 
 AWS 서비스 ➔ `Certificate Manager ` ➔ `인증서요청` ➔ `도메인 이름 추가`: Root 도메인을 포함하려면 2개를 입력해야함  `pikachu.kr` + `*.pikachu.kr`  ➔ `계속` : AWS로부터 이메일 2개 확인 `I Approve` ➔ 발급 완료
 
@@ -577,9 +758,13 @@ AWS 서비스 ➔ `Certificate Manager ` ➔ `인증서요청` ➔ `도메인 �
 
 **ACM**( AWS Certificate Manager )
 
+<br/>
 
+<br/>
 
-## Route53
+## 5) Route53
+
+<br/>
 
 ❶ AWS 서비스 ➫ Route53 ➫ Hosted zones ➫ `Create Hosted Zone` ➫ `Create Record Set` ➫  **`Type NS`** 
 
@@ -609,12 +794,18 @@ Alis Target: ***.ap-northeast-2.elasticbeanstalk***
 
 ```sh
 # IP없는 ELB가 도메인 주소를 받을 수 있는 이유: 위 Alias ◉YES의 의미 
-ELB(로드밸런서) ⟜ Route53 ⟜ EC2(by EB)
+Route53 ⟜ ELB(로드밸런서) ⟜ EC2(by EB)
 ```
 
+<br/>
 
+<br/>
 
-## HTTPS 리다이렉션 
+## 6) HTTPS 리다이렉션 
+
+<br/>
+
+1)  **SSL 동작원리 및 SSL/TLS인증서,  HTTPS 추가를 하는 이유** 
 
 ```sh
 # SSL 동작원리
@@ -626,13 +817,17 @@ ELB(로드밸런서) ⟜ Route53 ⟜ EC2(by EB)
 ### 'SSL/TLS인증서', 'HTTPS추가'를 하는 이유
 ```
 
-###  SSL/TLS 인증서
+<br/>
+
+2)  **SSL/TLS 인증서** 
 
   	위 **ACM** 참조  
 
-### ELB에 HTTPS 추가
+<br/>
 
-❺ AWS 서비스  ➫  EC2  ➫  로드밸런서  ➫  `리스너 추가`: 프로토콜 선택 **HTTPS**  아래와 같이 작성 ➫  생성 
+3)  **ELB에 HTTPS 추가** 
+
+* ❺ AWS 서비스  ➫  EC2  ➫  로드밸런서  ➫  `리스너 추가`: 프로토콜 선택 **HTTPS**  아래와 같이 작성 ➫  생성 
 
 ```sh
 프로토콜 HTTPS(보안 HTTP)
@@ -642,13 +837,14 @@ ELB(로드밸런서) ⟜ Route53 ⟜ EC2(by EB)
 인증서이름 ******
 ```
 
-➅ EB 보안그룹 인바운드 규칙 
+* ➅ EB 보안그룹 인바운드 규칙 
+  * AWS 서비스  ➫ EC2  ➫ 보안그룹  ➫ ▣ 설명 Elastic Beanstalk created security ~~ ➫ 인바운드 규칙 편집 : HTTPS 추가 ➫ 저장 
 
-AWS 서비스  ➫ EC2  ➫ 보안그룹  ➫ ▣ 설명 Elastic Beanstalk created security ~~ ➫ 인바운드 규칙 편집 : HTTPS 추가 ➫ 저장 
+<br/>
 
+4)  **EB nginx** 
 
-
-### EB nginx 설정 
+* 설정 
 
 ```sh
 # EB의 nginx설정 
@@ -660,7 +856,9 @@ sudo vi /etc/nginx/sites-available/elasticbeanstalk-nginx-docker-proxy.conf
 sudo service nginx restart
 ```
 
-#### `.ebextensions`
+
+
+* **`.ebextensions`** 
 
 검색 :  **구성 파일 (.ebextensions)을 사용하여 고급 환경 사용자 지정** 
 
@@ -717,9 +915,119 @@ server {
 }
 ```
 
+<br/>
+
+<br/>
+
+---
+
+# 3. AWS ELB - Django App  Healthcheck 문제
+
+> [Gotcha 블로그 - 5 Gotchas with Elastic Beanstalk and Django](https://hashedin.com/5-gotchas-with-elastic-beanstalk-and-django/)
+
+> [이한영 블로그 - Elastic Beanstalk의 Django 애플리케이션에서 발생하는 ELB Health check 4xx에러 해결](https://lhy.kr/elb-healthcheck-for-django)  
+
+>  [Host Header Attack](https://www.acunetix.com/blog/articles/automated-detection-of-host-header-attacks/) 
 
 
 
+이 포스트 중 Host Header Attack에 대한 설명은  [Host Header Attack](https://www.acunetix.com/blog/articles/automated-detection-of-host-header-attacks/) 의 일부를 발췌한 내용입니다.  ELB  Health check 4xx에러는 위 [이한영 블로그](https://lhy.kr/elb-healthcheck-for-django)를 참고하였습니다.  위 에러의 해결을 담은 포스트는  [Gotcha 블로그](https://hashedin.com/2017/01/06/5-gotchas-with-elastic-beanstalk-and-django/)를 참조하였습니다. 
+
+<br/>
+
+## 1) 문제점
+
+**하나**의 IP주소를 가지는 웹서버가 **여러** 웹사이트와 웹어플리케이션을 제공하는 것이 일반적이므로, 웹서버가 특정 웹사이트에 대한 사용자의 HTTP 요청에 적정하게 응답하려면 **Host Header의 정보** ( *웹서버의 여러 웹사이트 중 사용자가 찾는 웹사이트의 위치가 담긴 정보* )가 필요하다.  그런데 이 Host Header의 정보를 <u>사용자가 제어할 수 있습니다.</u>  따라서 웹개발자는 다음 문장을 항상 명심해야 합니다. 
+
+> in application security user input should **always** be considered **unsafe** and therefore, **never**trusted without properly validating it first.  (애플리케이션 영역에서 사용자의 입력은 항상 안전하지 않고, 유효할 것이라고 신뢰해서는 안된다.) 
+
+
+
+![Web Cache poisoning]({{ site.url }}/data/AwsEB/0-http_host_header_attack.png) 
+
+[ 그림.  Web-cache poisoning ]
+
+인터넷 보안 문제 중 **HTTP Host Header attack**은  공격자가 사용자와 웹서버 사이에서 사용자의 HTTP요청에 들어있는 **Host Header의 정보**를 이용하거나 망가뜨리는 방법으로 사용자의 비밀번호 재설정 정보를 망가뜨리거나(Password Reset Poisoning), 웹 캐시 데이터를 망가뜨리는 기술(Web-cache poisoning)입니다.
+
+구체적으로  Password Reset Poisoning을 살펴보자.  웹사이트를 만들 때  웹개발자가  Host Header의 값을 사용하여 비밀번호 재설정 링크를 만들면,  공격자는 웹서버가 피해자에게 전송한 위 링크를  공격 할 수 있습니다. 피해자가 웹서버가 보내온 e메일에서 오염된 링크를 클릭하는 순간 공격자는 피해자의 암호 재설정 토큰을 탈취하여 피해자의 암호를 재설정 할 수 있습니다.
+
+
+
+이에 대한 대응방안으로  Django를 비롯한 여러 웹 개발 프레임워크는 **HTTP Host Header attack 보안 공격**을 방지하기 위해서  `settings.ALLOWED_HOST`의 white list를 이용할 것을 권고한다. 
+
+>  [Django-Host header validation](https://docs.djangoproject.com/en/1.11/topics/security/#host-header-validation) 
+>
+>  [Django-ALLOWED HOSTS](https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-ALLOWED_HOSTS)  
+
+예를 들어,  ***learndocker.kr*** 호스트만 HTTP 요청을 허용한다면 아래와 같이 설정한다. 
+
+```python
+ALLOWED_HOSTS = ['learndocker.kr',]
+```
+
+<br/> 
+
+**여기서 Health check 문제**가 발생한다.  AWS ELB의 Health check는 ELB가 EC2 인스턴스에서 구동하는 웹애플케이션의 URL로 GET요청을 보냄으로써 해당 웹애플리케이션이 정상적으로 구동하는지 여부를 확인하는 기능이다. 
+
+![AWS_ELB_IP_flow]({{ site.url }}/data/AwsEB/0-AWS_EB_IP_flow.png)
+
+ 그런데 AWS의 ELB는 외부에서 오는 요청과 관계없이  AWS VPC 내부의 EC2 인스턴스 ip(Private IP)로 요청을 보내기 때문에  Django의 settings.ALLOWED_HOSTS에 추가되지 않은 위  Private IP의 요청은 거절당하여  아래 그림과 같이  AWS의 Elastic Beanstalk에서 **Health check가 실패했다**는 결과가 나타난다. 
+
+![AWS EB Health check failure]({{ site.url }}/data/AwsEB/0-health_check_fail.png) 
+
+<br/>
+
+## 2) 해결
+
+> 참조-  [5 Gotchas with Elastic Beanstalk and Django](https://hashedin.com/5-gotchas-with-elastic-beanstalk-and-django/) 
+>
+> [이한영 블로그 - Elastic Beanstalk의 Django 애플리케이션에서 발생하는 ELB Health check 4xx에러 해결](https://lhy.kr/elb-healthcheck-for-django)  
+
+
+
+* 해결은 간단하다.  Django의  `settings.ALLOWED_HOSTS`에   Django가 동작하는 EC2 인스턴스 ip( Private IP )를 추가하면 된다. 
+* 아래 python 코드는 위 이한영 블로그의 것이다. 
+
+```python
+# settings.py
+ALLOWED_HOSTS = []
+
+def is_ec2_linux():
+    """Detect if we are running on an EC2 Linux Instance
+       See http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
+    """
+    if os.path.isfile("/sys/hypervisor/uuid"):
+        with open("/sys/hypervisor/uuid") as f:
+            uuid = f.read()
+            return uuid.startswith("ec2")
+    return False
+
+
+def get_linux_ec2_private_ip():
+    """Get the private IP Address of the machine if running on an EC2 linux server"""
+    from urllib.request import urlopen
+    if not is_ec2_linux():
+        return None
+    try:
+        response = urlopen('http://169.254.169.254/latest/meta-data/local-ipv4')
+        ec2_ip = response.read().decode('utf-8')
+        if response:
+            response.close()
+        return ec2_ip
+    except Exception as e:
+        print(e)
+        return None
+        
+private_ip = get_linux_ec2_private_ip()
+if private_ip:
+    ALLOWED_HOSTS.append(private_ip)
+```
+
+<br/>
+
+* 수정된 코드로 설정을 변경한 후 awsebcli 환경에서 `eb deploy`를 하면  **Health check**가 정상임을 확인할 수 있다. 
+
+![health check success]({{ site.url }}/data/AwsEB/0-health_check_success.png)
 
 
 
