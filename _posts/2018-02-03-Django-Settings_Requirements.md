@@ -2,8 +2,8 @@
 layout: post
 title:  "Django 환경분리- config_secret, settings, requirements"
 date:  2018-02-03 00:20 +0900
-categories: [Django]
-tags: [ Django, secret, settings, requirement]
+categories: [Django, 웹서버]
+tags: [ Django, secret, settings, requirement, shell, Nginx, uWSGI, 웹서버 ]
 ---
 
 
@@ -196,7 +196,7 @@ settings/
 
 <br/>
 
-### ➀ `settings.__init__`과  환경변수 설정
+### (1) `settings.__init__`과  환경변수 설정
 
 > [위키백과 - 환경변수 :](https://ko.wikipedia.org/wiki/%ED%99%98%EA%B2%BD_%EB%B3%80%EC%88%98)   프로세스가  컴퓨터에서 동작하는 방식에 영향을 주는 동적인 값들의 모임이라고 한다.  위키백과의 설명을 잘 이해할 수 없어서 경험적으로 알게 된 점을 요약하면  환경 변수는, 
 >
@@ -210,9 +210,9 @@ settings/
 
 `manage.py`의 코드를 살펴보면, 
 
-**현재까지**  python manage.py가 실행하는 명령어 (`runserver`, `shell`,  `shell_plus` 등)는 **DJANGO_SETTINGS_MODULE** 환경변수의 참조값인 **`config.settings`파일** (  파이썬의 실행경로 표현 방식임.  실제로는  현재 디렉토리에 있는 서브디렉토리 config/의  settings.py를 의미함 )<u>에 설정된 값을  참조한다</u>.  
+**현재까지**  python manage.py가 실행하는 명령어 (`runserver`, `shell`,  `shell_plus` 등)는 **DJANGO_SETTINGS_MODULE** 환경변수의 참조값인 **`config.settings`파일** (  파이썬의 실행경로 표현 방식임.  실제로는  현재 디렉토리에 있는 서브디렉토리 config/의  settings.py를 의미함 )<u>에서 설정된 값을  참조한다</u>.  
 
-*   manage.py
+*   `manage.py` 
 
 ```python
 #!/usr/bin/env python
@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
 <br/>
 
-* `settings.__init__.py`의 역할 -  settings 환경설정 모듈의 분리로 인하여 불필요하게 된 settings.py파일을 삭제하면,   python manage.py가 참조하는 Django 환경설정 파일을 바꿔야 한다.  바꾸는 방식은, 
+* `settings.__init__.py`의 역할 -  settings 환경설정 모듈의 분리로 인하여 불필요하게 된 settings.py파일을 삭제하면,   python manage.py가 참조하는 Django 환경설정 파일을 바꿔야 한다.  바꾸는 방식은,  <br/> <br/>
 
   * ❶  shell 환경에서 환경변수를 타이핑 하는 방법 - 이 방법의 단점은 manage.py를 실행할 때마다 일일이 타이핑하므로 피곤하다는 점이다.  쉘의 export 구문을 활용하더라도 타이핑의 수고로움을 덜 수 있으나  환경변수가 드러나지 않아  매 확인이 필요하다. 
 
@@ -245,8 +245,8 @@ if __name__ == "__main__":
 
   ​
 
-  * manage.py 코드를 수정하는 방법 -  이 방법은 코드 유지/보수 관리가 어려워지므로 권장하지 않는다. 
-  * ❷**\__ini__.py**에서  환경변수를 정하는 방법  - 타이핑의 수고로움이 없는 대신 개발자가 환경변수를 선택하는 로직을 잘 구현해야 하고,  협업 개발자나 유지/보수 관리자가 이 파일의 내용을 알아야 한다.   
+  * manage.py 코드를 수정하는 방법 -  이 방법은 코드 유지/보수 관리가 어려워지므로 권장하지 않는다.  <br/><br/>
+  * ❷  **\__ini__.py**에서  환경변수를 정하는 방법  - 타이핑의 수고로움이 없는 대신 개발자가 환경변수를 선택하는 로직을 잘 구현해야 하고,  협업 개발자나 유지/보수 관리자가 이 파일의 내용을 알아야 한다.   
 
   ```python
   # settings/__init__.py
@@ -258,26 +258,62 @@ if __name__ == "__main__":
       from .local import *
   ```
 
-  ​
+  <br/><br/> 
 
+### (2) `settings.base.py`
 
+<br/>
 
+* 파일 구조 
 
+```sh
+<컨테이너 폴더>                # ROOT_DIR의 위치 
+├── .git
+├── .gitignore
+├── .media
+├── .static_root
+├── .config_secret/
+│     ├── settings_common.json 
+│     ├── settings_deploy.json 
+│     └── settings_dev.json 
+├── <프로젝트 폴더>              # BASE_DIR의 위치 
+│     ├── <Django App폴더>
+│     ├── config
+│     │   ├── __init__.py
+│     │   ├── settings
+│     │   │    ├── __init__.py  
+│     │   │    ├── base.py     # ✔ 현재 이 폴더이다. 
+│     │   │    ├── local.py  
+│     │   │    ├── dev.py    
+│     │   │    └── deploy.py  
+│     │   ├── urls.py
+│     │   └── wsgi
+│     ├── db.sqlite3
+│     ├── manage.py
+│     ├── static
+│     └── templates
+└── requirements.txt
+```
 
+ <br/>
 
+* settings.py 옮기기 
 
-### ❷ `settings.base`
+```sh
+➜  mv config/settings.py config/settings/base.py
+```
+
+<br/>
+
+* settings / base.py -  위 파일 구조를 전제로 한 코드이다. 
 
 ```python
-# settings package를 생성하여 base.py, local.py, dev.py를 만들어 준다. 
-mv config/settings.py config/settings/base.py
-# config.settings.py  ⟼ mv ⟼ config.settings.base.py
-#                              config.settings.local.py
-#                              config.settings.dev.py
-# base.py의 계층이 한 단계 낮아졌으므로, BASE_DIR이 Django project 폴더(여기서는 ec2eb)를 가리키도록 조정한다. 
 DEBUG = True
-# Paths
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Paths - base.py의 파일위치가 한 단계 낮아졌으므로, BASE_DIR이 Django project 폴더를 가리키도록 조정한다. 
+
+_BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname( _BASE )
 ROOT_DIR = os.path.dirname(BASE_DIR)
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 
@@ -293,22 +329,20 @@ SECRET_KEY = config_secret_common['django']['secret_key']
 # Static paths
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    STATIC_DIR,
-]
+STATICFILES_DIRS = [ STATIC_DIR, ]
 STATIC_ROOT = os.path.join(ROOT_DIR, '.static_root')
 
 # Media paths
 MEDIA_ROOT = os.path.join(ROOT_DIR, '.media')
 MEDIA_URL = '/media/'
-
-# Auth
-AUTH_USER_MODEL = 'member.User'
 ```
 
-<br/>
 
-### ✔`urls.py`의 MEDIA
+
+### ✔ MEDIA 처리 
+
+* media_root는  static_root와 달리 알아서  Django가 알아서 경로를 찾아주지 않는다. 
+* 나중에 media_root,  static_root 모두  AWS S3 (원격 스토리지)를 사용할 것이다. 
 
 ```python
 # settings.MEDIA_URL 대신 (settings.py삭제) 아래처럼 설정한다.
@@ -318,9 +352,9 @@ urlpatterns += static(
 )
 ```
 
+<br/> 
 
-
-### ➂ `settings.local`
+### (3)  `settings.local`
 
 ```python
 # base를 기준으로 하되, DB는 sqlite3, localhost를 사용함
@@ -338,28 +372,30 @@ DATABASES = {
 SECRET_KEY = ✳✳✳✳✳✳✳✳✳✳✳✳✳✳
 ```
 
-### ❹ `settings.dev`
+<br/>
+
+### (4)  `settings.dev`
 
 ```python
 # base를 기준으로 함, DB는 PostgreSQL
-# storage는 .static_root 및 .media_root에서 AWS S3로
+# storage는 .static_root 및 .media에서 AWS S3로 바꿈 
 from .base import *
 
 SETTINGS_DEV = json.loads(open(os.path.join(CONFIG_SECRET, "settings_dev.json")).read())
+
 DEBUG = True 
+
 WSGI_APPLICATION = 'config.wsgi.dev.application'
-ALLOWED_HOSTS = [
-    'localhost',
-    '.jskim.net',
-    '.elasticbeanstalk.com',
-]
+ALLOWED_HOSTS = ['localhost', '.try.net', '.elasticbeanstalk.com',]
+
 # AWS Access
 AWS_ACCESS_KEY_ID = SETTINGS_DEV['aws']['id']
 AWS_SECRET_ACCESS_KEY = SETTINGS_DEV['aws']['key']
+
 # AWS RDS Access
 DATABASES = SETTINGS_DEV['psql']
-## DATABASES = SETTINGS_DEV['sqlite']
 pprint(DATABASES)
+
 # AWS S3 bucket Access
 AWS_SECRET_ACCESS_KEY = SETTINGS_DEV['aws']['key']
 AWS_STORAGE_BUCKET_NAME = SETTINGS_DEV['aws']['bucket']
@@ -372,26 +408,30 @@ MEDIAFILES_LOCATION = 'media'
 # S3 FileStorage
 DEFAULT_FILE_STORAGE = 'config.storages.MediaStorage'
 STATICFILES_STORAGE = 'config.storages.StaticStorage'
+
 # django-storages 앱 등록
 INSTALLED_APPS += ['storages', ]
 ```
 
-DATABASES 등 dev setting이  deploy와 다를 수 있다.  이런 경우에는 `config_secret`이  `.config_settings/settings_common.json`을 참조하고 있으므로,  `.config_settings/settings_deploy`등을 새로 만들어서 각 참조할 수 있게 한다. 
+* DATABASE가 settings.dev와   settings.deploy에서 서로 다를 경우 `.config_settings/settings_deploy.json`을  만든다. 
 
 ```sh
 .config_secret
-     settings_common.json
-     settings_deploy.json
-     settings_dev.json
+  ├── settings_common.json 
+  ├── settings_deploy.json 
+  └── settings_dev.json 
 
 # pqsql로 접속 
-psql --host=<AWS RDS 엔드포인트> --port=5432 --user=learn postgres
+➜  psql --host=<AWS RDS 엔드포인트> --port=5432 --user=learn postgres
+
 # DATABASE 생성
 postgres=> CREATE DATABASE eb_docker_dev OWNER learn;
 postgres=> CREATE DATABASE eb_docker OWNER learn;
 ```
 
-### ➄ `settings.deploy`
+<br/> 
+
+### (5)  `settings.deploy`
 
 ```python
 from pprint import pprint
@@ -399,14 +439,16 @@ from .base import  *
 
 config_secret = json.loads(open(CONFIG_SECRET_DEPLOY_FILE).read())
 WSGI_APPLICATION = 'config.wsgi.deploy.application'
+
 DEBUG = False
+
 # AWS Storage
 STATICFILES_LOCATION = 'static'
 MEDIAFILES_LOCATION = 'media'
 # AWS
 AWS_ACCESS_KEY_ID = config_secret['aws']['aws_access_key_id']
 AWS_SECRET_ACCESS_KEY = config_secret['aws']['aws_secret_access_key']
-AWS_STORAGE_BUCKET_NAME = config_secret['aws']['aws_storage_bucket_name']
+AWS_STORAGE_BUCKET_NAME = config_secret['aws']['aws_storage_bucket']
 ## S3의 version4 사용 > url domain 이후 시그니쳐를 인식시킴
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_REGION_NAME = 'ap-northeast-2'
@@ -418,15 +460,23 @@ STATICFILES_STORAGE = 'config.storages.StaticStorage'
 DATABASES = config_secret['django']['databases']
 
 ALLOWED_HOSTS = [ # 'localhost',
-    '.jskim.net', '.elasticbeanstalk.com',]
+    '.wooltari.net', '.elasticbeanstalk.com',]
 ```
 
-## WSGI 분리
+<br/>
+<br/>
 
-### local
+---
+
+# 4. uwsgi 분리
+
+<br/>
+
+
+
+### 1)  local.py
 
 ```python
-
 import os
 from django.core.wsgi import get_wsgi_application
 
@@ -435,43 +485,140 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 application = get_wsgi_application()
 ```
 
-### dev
-
-  위와 비슷하고, `"config.settings.dev"`로 바꿈
+<br/>
 
 
 
-# ♺ Nginx, uwsgi, supervisor 
+### 2)  dev.py 
 
-AWS ElasticBeanstalk의 Docker플랫폼을 사용한 Django 배포를 위한 **사전 설정** 이다. 
+  위와 비슷하고, `"config.settings.dev"`로 바꾼다. 
 
-### 전체적인 모습
+```python
+import os
+from django.core.wsgi import get_wsgi_application
 
-**`dockerfile expose 80` ⟺ `port:80 Nginx Server port:666`  ⇐ tmp/app.sock ⇒ `uWSGI` ⟺ `Django`**
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
-
-
-### Pycharm `File Types`
-
-| File Type         | Patterns                               | 사용례                                      |
-| ----------------- | -------------------------------------- | ---------------------------------------- |
-| Dockerfile        | `Dockerfile`, `Dockerfile.✶`           | `Dockerfile ` , `Dockerfile.base`, `Dockerfile.local` |
-| Nginx Config      | `✶.conf`, ` ✶.nginx`                   | `app.conf`,  `nginx.conf`                |
-| supervisor, uwsgi | ` ✶.ini`, ` ✶.service`, `supervisor ✶` | `supervisor-nginx.conf`, `supervisor-uwsgi.conf`,  `app.ini` , |
-
-
-
-### Nginx 설정
-
-#### `nginx.conf`
-
-```sh
-$ sudo apt-get install nginx
-# /etc/nginx/nginx.conf가 자동 생성됨 ➜ 이것을 copy해야 함 
-$ docker exec <실행 중 컨테이너 id> cat /etc/nginx/nginx.conf > nginx.conf
+application = get_wsgi_application()
 ```
 
-nginx의 경우  `daemon on`이 **default** 이다.  `systemd`는  daemon을 process 단위로 관리하므로 격리된 프로세스를 운영하는 docker container에서 쓸 수 없다.  `supervisor`는  docker container에서 사용할 수 있으나  daemon을 관리할 수 없으므로  `daemon off`를  해야한다. 
+
+
+<br/>
+
+<br/>
+
+#  5. requirements.txt 분리
+
+개발 단계에서만 필요한 패키지들을 굳이 운영 단계에까지 설치하여 사용할 필요가 없다.  특히 도커 플랫폼인 AWS의 Elastic Beanstalk에서 `➜ eb deploy`를 하면  dockerfile을 통해 `➜ pip install -r requirement`를 실행하므로  패키지 설치에 시간과 메모리를 소모한다.  
+
+따라서 **배포의 경량화**를 통해  효율적인 배포를 하는 방안의 하나로 requirements.txt의 분리가 필요하다. 
+
+* 디렉토리 구조
+
+```sh
+requirements/
+  ├── base.txt
+  ├── dev.txt
+  └── deploy.txt
+```
+
+* base.txt - 공통 패키지들을 놓는다. 
+
+```
+Django==2.0.1
+...
+```
+
+* dev.txt - 개발 환경에만 필요한 것들을 넣는다. 
+
+```sh
+Django-extension ...
+pytext...
+```
+
+* deploy.txt - 배포 환경에만 필요한 것들을 넣는다. 
+
+<br/>
+
+<br/>
+
+---
+
+# 6. Nginx, uwsgi, supervisor 
+
+여기부터는 AWS ElasticBeanstalk ( Docker플랫폼 )을 사용하여 Django를 배포하기 위한 **사전 설정** 이다.  개발 단계와 배포 단계가 다르므로  settings 환경 분리와 같이 가야 한다. 
+
+<br/>
+
+## 1) 웹 서버의 구성
+
+![local Nginx/uwsgi/supervisor]({{ site.url }}/data/settings/0-local_nginx_uwsgi.png) 
+
+* **dockerfile**의 명령어 `expose 80`에 맞추어 설정
+  * **`port:80 Nginx Server port:666`  ⇐ tmp/app.sock ⇒ `uWSGI` ⟺ `Django`**
+* docker system 내에서는  http통신보다 socket 통신이 훨씬 효율이 높으므로,  Nginx와 uWSGI 사이에는 socket 통신으로 설정한다. 
+* docker의 연결 포트는  dockerfile의 내용을 참작해야 한다. 
+
+<br/>
+
+## 2) Pycharm `File Types`
+
+pycharm을  통합개발IDE로 사용한다면,  개발자는  아래와 같은  pycharm settings에서 File Type을 설정하면  pycharm이  파일명으로부터 파일 타입을 인식하여  그에 맞는 문법을 알려준다.   편리한 기능이다. 
+
+| File Type         | Patterns                           | 사용례                                      |
+| ----------------- | ---------------------------------- | ---------------------------------------- |
+| Dockerfile        | Dockerfile, Dockerfile.\*          | Dockerfile,   Dockerfile.base,   Dockerfile.local |
+| Nginx Config      | \*.conf,    \*.nginx               | app.conf,    nginx.conf                  |
+| supervisor, uwsgi | \*.ini,   \*.service, supervisor\* | supervisor-nginx.conf,    supervisor-uwsgi.conf,   app.ini |
+
+<br/>
+
+<br/>
+
+## 3) Nginx 설정
+
+> [위키백과-웹서버](https://ko.wikipedia.org/wiki/%EC%9B%B9_%EC%84%9C%EB%B2%84) 
+>
+> [Apache vs. Nginx 성능비교 \| 명확하게](https://brightly888.blogspot.kr/2017/07/apache-vs-nginx.html) 
+>
+> <https://httpd.apache.org/docs/2.4/en/mod/event.html>
+>
+> <http://nginx.org/en/docs/>
+>
+> <https://www.nginx.com/blog/thread-pools-boost-performance-9x/> 
+
+
+
+![웹서버 사용분포](https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Usage_share_of_web_servers_%28Source_Netcraft%29.svg/800px-Usage_share_of_web_servers_%28Source_Netcraft%29.svg.png)
+
+
+
+
+
+* 웹 서버의 종류는 많다.  Django의 runserver도 웹 서버의 기능을 담당한다.   대표적으로 Apache,  IIS(마이크로소프트), Nginx,  GWS등이 있다.   
+* 웹 서버를 선택하는 기준은 동시 접속 수를 얼마나 잘 수용할 수 있는가?  즉, 웹 서버 트래픽 폭주에 어느 만큼 대응할 수 있는가로 판단한다. 
+* 여기서는 모듈로 구성되고  Event-driven이면서 비동기 방식으로 동작하며  worker 프로세스가 Single-threaded인  **Nginx가  부하가 커지더라도 CPU/메모리 사용량이 크게 증가하는 등 성능저하가 일어나지 않으므로** Apache보다 **사용하기에 적합하다**고 판단하였다. ( 물론 절대적인 기준은 없다. ) 
+* 한편 Django runserver가  개발/테스트 환경에 적합하게 설계된 반면  Nginx는 배포 환경에 보다 적합(웹 트래픽에서  runserver가 쫓아갈 수 없다.)하다.   따라서 각 웹서버의 장점을 최대한 살리려면  local 환경에서는 runserver를 사용하여 손쉽게 테스트를 할 수 있도록 하고,  배포환경에서는 웹 트래픽에 강한 Nginx를 사용한다. 
+* 이하  nginx 설정과  이에 대응하는 앱 설정을 살펴본다. 
+
+<br/>
+
+### (1) `nginx.conf` 
+
+* 설치 
+
+```sh
+➜ sudo apt-get install nginx
+
+# /etc/nginx/nginx.conf가 자동 생성됨 ➜ 이것을 copy해야 함 
+➜ docker exec <실행 중 컨테이너 id> cat /etc/nginx/nginx.conf > nginx.conf
+```
+
+* 데몬 관리 툴 -  systemd?  supervisor?
+  * nginx의 경우  `daemon on`이 **default** 이다.  즉, nginx는 기본적으로 데몬으로 작동한다. 
+  * systemd는  데몬을 process 단위로 관리할 수 있으나 local과 격리된 프로세스로 작동하는 **docker container에서 쓸 수 없다.**  
+  * 그러나  **supervisor는  docker container에서  process를 관리할 수 있다.**  다만  daemon을 관리할 수 없으므로 nginx설정파일에서 `daemon off`로 설정해야 한다. 
 
 ```nginx
 user root;    # ✓ 수정 www-data가 기본값임 
@@ -539,16 +686,21 @@ http {  # Basic Settings
 #}
 ```
 
-#### `app.conf `
+<br/>
+
+### (2) `app.conf `
+
+* 여기서  Nginx와 uWSI를 연결하는 설정을 한다. 
+* 파일위치와  URL을 매칭하는 설정도 이루어진다. 
+* 고객 요청의 크기(`client_max_body_size`)는 넉넉하게 잡아준다.
+* **settings.local**의 경우 -  localhost가 작동한다. 
 
 ```nginx
 server {
     listen 80;    # ✓ Dockerfile의 expose 80 
-# .config/deploy/nginx/app.conf
-# .config/dev/nginx/app.conf
-    server_name  *.elasticbeanstalk.com *.jskim.net;
 # .config/local/nginx/app.conf
-    server_name  localhost *.elasticbeanstalk.com *.jskim.net;
+    server_name  localhost *.elasticbeanstalk.com *.wooltari.net;
+  
     charset utf-8;
     client_max_body_size 128M;
 
@@ -565,11 +717,62 @@ server {
 }
 ```
 
+<br/>
+
+* **settings.dev** 또는 **settings.deploy**의 경우 -  localhost를 삭제한다. 
+
+```nginx
+server {
+    listen 80;    # ✓ Dockerfile의 expose 80 
+  
+# .config/deploy/nginx/app.conf
+# .config/dev/nginx/app.conf  
+    server_name  *.elasticbeanstalk.com *.wooltari.net;
+  
+    charset utf-8;
+    client_max_body_size 128M;
+
+    location / {
+        uwsgi_pass    unix:///tmp/app.sock;
+        include       uwsgi_params;
+    }
+    location /static/ {
+        alias /srv/app/.static_root/;
+    }
+    location /media/ {
+        alias /srv/app/.media/;
+    }
+}
+```
+
+<br/>
+
+## 4) WSGI 설정
+
+> [위키백과- WSGI](https://ko.wikipedia.org/wiki/%EC%9B%B9_%EC%84%9C%EB%B2%84_%EA%B2%8C%EC%9D%B4%ED%8A%B8%EC%9B%A8%EC%9D%B4_%EC%9D%B8%ED%84%B0%ED%8E%98%EC%9D%B4%EC%8A%A4)는  Web Server Gateway Interface의 약자이다.  웹서버와  웹 애플리케이션의 인터페이스를 위한  python 프레임워크이다. 
+>
+> * WSGI 미들웨어라고 불리운다. 
+> * 웹서버가 볼 때에는 애플리케이션으로,  애플리케이션의 관점에서는 서버로 행동한다. 따라서  Nginx가 없더라도 WSGI만으로 Server기능을 수행할 수 있으나  Nginx만큼 효율적이고 안정적으로  웹 트래픽(동시접속 등)을 성능저하 없이 감당할 수 없다. 
+> * WSGI의 기능은,
+>   * 환경변수가 바뀌면  그에 따른 대상 URL에 맞추어  요청(request)의 경로를 지정해주고,
+>   * 같은 프로세스에서 여러 애플리케이션과 프레임워크가 실행되도록 하며,
+>   * XSLT 스타일시트처럼 전처리한다. 
+>
+> <br/>
+>
+> [우분투에서 Django + gunicorn + supervisor + nginx 연동하기](http://yujuwon.tistory.com/entry/%EC%9A%B0%EB%B6%84%ED%88%AC%EC%97%90%EC%84%9C-Django%EC%99%80-gunicorn-supervisor-nginx-%EC%97%B0%EB%8F%99-%ED%95%98%EA%B8%B0) 
+>
+> * WSGI서버에는 uWSGI, gunicorn, Apache/mod-wsgi를 많이 사용하는데,  uWSGI는 고성능 서버 성능을,  gunicorn은 보통 수준의 성능이지만 설치와 관리가 간단하다는 장점을 가지고 있다.
+
+<br/>
 
 
-### WSGI 설정
 
-####  `app.ini` 
+###  (1) `app.ini` 
+
+* 개발 단계에 맞게 모듈을 선택하고,  pyenv의 환경과  소켓 등을 설정한다. 
+* 로그 기록 경로도 설정한다.  
+* **.config/local/uwsgi/app.ini** 
 
 ```ini
 [uwsgi]
@@ -595,32 +798,185 @@ logto = /var/log/uwsgi/app/@(exec://date +%%Y-%%m-%%d).log
 log-reopen = true
 ```
 
-
-
-### supervisor 설정 
-
-  docker container에서  systemd 대신 supervisor가 리눅스 프로그램들을 관리한다. supervisor는 systemd와 달리  nginx.conf에서 daemon off로 설정되어야 한다. 
+*  **.config/dev/uwsgi/app.ini**
 
 ```ini
-# supervisor-nginx.conf
+[uwsgi]
+chdir = /srv/app/<장고프로젝트폴더명>
 
+# .config/dev/uwsgi/app.ini
+module = config.wsgi.dev:application
+...  이하 위와 같음 
+```
+
+* **.config/deploy/uwsgi/app.ini** 
+
+```ini
+[uwsgi]
+chdir = /srv/app/<장고프로젝트폴더명>
+
+# .config/deploy/uwsgi/app.ini
+module = config.wsgi.deploy:application
+... 이하 위와 같음 
+```
+
+
+
+<br/>
+
+<br/>
+
+## 5) supervisor 설정 
+
+> [Supervisor: A Process Control System 공식문서](http://supervisord.org/)  -  supervisor는 사용자가 UNIX와 유사한 운영 체제에서 여러 프로세스를 모니터하고 제어할 수있는 클라이언트 / 서버 시스템입니다.
+>
+> [10분만에 익히는 supervisor 설치와 사용법](https://jwkcp.github.io/2016/11/07/how-to-use-supervisor-in-one-minute/) - supervisor는  24시간 돌아가는 서비스 운영에서  손쉽게 프로세스의 상태를 보여주고 죽은 프로세스도 자동으로 살려주는 어려움을 해결하기위해 만들어졌다. 
+>
+> * 용어
+>   * supervisor | 이 제품의 이름
+>   * supervisor**d**  | 백그라운드 데몬 프로세스 
+>   * supervisor**ctl**  |  supervisor가 구동하는 프로세스들을 관리하는 명령어 
+>
+> [Supervisor. 프로세스 관리, 로그 확인](http://blog.kichul.co.kr/2017/04/10/2017-04-10-supervisor-python/) 
+>
+> * 기본 사용법 
+>
+> ```sh
+> pip install supervisor
+>  
+> # 설정 파일 생성
+> echo_supervisord_conf > /etc/supervisord.conf
+>  
+> # 설정파일 적절히 수정
+> vi /etc/supervisord.conf
+>  
+> # 데몬 실행
+> /usr/bin/python /usr/bin/supervisord -c /etc/supervisord.conf
+> ```
+>
+> * 설정 파일 작성법
+>
+> ```ini
+> [program:python_web_application]
+> command=python -m python_web_application.cli api
+> directory=/python_web_application_working_dir
+> autostart=true
+> ```
+>
+> | 키         | 설명                                      |
+> | --------- | --------------------------------------- |
+> | command   | 어떤 커맨드를 실행할지 정의                         |
+> | directory | 어떤 디렉토리에서 실행할지 정의                       |
+> | autostart | supervisor 데몬이 시작할 때 이 프로세스도 같이 실행할지 정의 |
+>
+> * 프로세스 관리 방법  supervisorctl
+>
+> ```sh
+> # supervisor 실행
+> ➜  supervisorctl
+>
+> # 결과
+> project1_minio_sync             RUNNING   pid 25099, uptime 19:35:34
+> project1_react_app_es6          RUNNING   pid 30815, uptime 6 days, 0:49:03
+> ...
+>
+> ➜  supervisor> help
+> ```
+>
+> <br>
+>
+> ```sh
+> # 모든 프로세스 보기
+> status
+>  
+> # 설정된 모든 프로세스 보기
+> avail
+>  
+> # 나가기
+> exit or quit
+>  
+> # foreground로 프로세스를 확인
+> fg process_name
+>  
+> # 프로세스 시작, 중지, 재시작
+> start process_name
+> stop process_name
+> restart process_name
+>  
+> # supervisord를 재시작
+> reload
+>  
+> # 설정 파일을 다시 불러온다
+> reread
+>  
+> # 프로세스를 그룹에 추가
+> add process_name
+> ```
+>
+> 
+
+<br/>
+
+* 설치 
+
+  * apt-get으로 설치 
+
+  ```sh
+  ➜  apt-get install suervisor
+  ```
+
+  * pip로 설치
+
+  ```sh
+  ➜  pip install supervisor
+  ```
+
+
+<br/>
+
+* 설정 - /etc/supervisor 디렉토리 아래 supervisord.conf 설정 파일을 찾을 수 있다. 
+
+  * [program:프로그램명] 기재 
+  * **실행 스크립트 경로**를 command 속성에 넣는다. 
+
+<br/>
+
+* **supervisor-nginx.conf**  -  nginx를 관리하는 supervisor 설정 파일.  nginx 명령어는 path 환경변수가 알아서 찾아주는 것으로 보인다. 
+
+```ini
 [program:nginx]
 command = nginx`supervisor-uwsgi.conf`
 ```
 
-```ini
-# supervisor-uwsgi.conf
 
-[program:uwsgi]
-# .config/deploy/supervisor/supervisor-uwsgi.conf
-command = /root/.pyenv/versions/app/bin/uwsgi -i /srv/app/.config/deploy/uwsgi/app.ini
 
-# .config/dev/supervisor/supervisor-uwsgi.conf
-command = /root/.pyenv/versions/app/bin/uwsgi -i /srv/app/.config/dev/uwsgi/app.ini
+* **supervisor-uwsgi.conf**  - uwsgi 명령어는 path를 설정해주어야 한다.  .bashrc 등에 path 환경변수 설정을 할 수 있으나  번거롭다.  자주 쓰이는 명령어가 아니기 때문이다. 
 
-# .config/local/supervisor/supervisor-uwsgi.conf
-command = /root/.pyenv/versions/app/bin/uwsgi -i /srv/app/.config/local/uwsgi/app.ini
-```
+  * local
+
+  ```ini
+  [program:uwsgi]
+
+  command = /root/.pyenv/versions/app/bin/uwsgi -i /srv/app/.config/local/uwsgi/app.ini
+  ```
+
+  * dev
+
+  ```ini
+  [program:uwsgi]
+
+  command = /root/.pyenv/versions/app/bin/uwsgi -i /srv/app/.config/dev/uwsgi/app.ini
+  ```
+
+  * deploy
+
+  ```ini
+  [program:uwsgi]
+
+  command = /root/.pyenv/versions/app/bin/uwsgi -i /srv/app/.config/deploy/uwsgi/app.ini
+  ```
+
+
 
 
 

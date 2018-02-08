@@ -308,11 +308,13 @@ Login Succeeded
 
 ---
 
-## 5) Django settings
+###  ✔  Django settings
 
 <br/>
 
-Django Settings 분리 참조 
+
+
+[Django Settings 환경설정 분리]({% post_url 2018-02-03-Django-Settings_Requirements %}) 참조  
 
 ```sh
 <project container>
@@ -332,14 +334,14 @@ Django Settings 분리 참조
           │   ├─ __init__.py
           │   ├─ local.py
           │   └─ dev.py
-          └─ urls # media_root
+          └─ urls # media_root 설정 
 ```
 
 <br/>
 
-### local Nginx, uWSGI 설정
+### ✔  local Nginx, uWSGI 설정
 
-* Django settings 분리 참조 
+* [Django Settings 환경설정 분리]({% post_url 2018-02-03-Django-Settings_Requirements %}) 참조  
 * **전체 모습** 
 
 ![local Nginx, uWSGI 설정]({{ site.url }}/data/AwsEB/0-local_nginx_uwsgi.png)
@@ -576,26 +578,45 @@ $ docker ps -a
 
 <br/>
 
-# 2. ElasticBeanstalk 
+# 2. 도커 플랫폼(ElasticBeanstalk)  
 
 <br/>
 
-[공식문서](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/Welcome.html) http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/Welcome.html
+>  [공식문서  http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/Welcome.html](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/Welcome.html)  
+>
+> 백엔드 개발자는 서버환경을 구축하고 웹 애플리케이션을 개발하는 역할을 하였다.  문제는 이 모두를 잘 다루는데  많은 시행착오와 시간을 들여야 한다는 점이다.   AWS의  Elastic Beanstalk(이하 EB로 약칭한다)을 사용하면 서버 구축/유지 관리에 드는 노력을 줄이고  웹 애플리케이션 개발에 집중할 수 있다. 
+>
+> * EB는  Docker를 실행할 EC2,  데이터베이스 RDS,  파일 스토리지 S3 등을 연결해주고,  ELB로 EC2의 트래픽 등을 점검하다가 트래픽이 넘치면 자동으로 EC2를 추가해주는 Auto Scaling 기능을 알아서 설정해준다. 
+> * 그러나 EB 구축과정이  서버 구축만큼 어려울 수 있다. 
 
-Docker를 이용한 배포에 대해 최근  **ECS**를 쓰이고 있다.  여기서는 EB만을 다루기로 한다. 
 
-[ECS( Amazon EC2 Container Service )](https://aws.amazon.com/ko/ecs/)
+
+>  [ECS( Amazon EC2 Container Service )](https://aws.amazon.com/ko/ecs/)
+>
+> Docker를 이용한 배포에 대해 최근  **ECS**를 쓰이고 있다.  여기서는 EB만을 다루기로 한다. 
 
 <br/>
 
 ## 1) IAM
 
+* 과정 요약 -  EB 유저 생성,  Access Key ID 및 Secret access key
+
+  `서비스` ➫ `Add user` : EB-User: ☑Programmatic access ➫ `permission`  ➫ `Attach existing policies directly` ➫ ☑ AWSElasticBeanstalkFullAccess ➫ Review ➫ `Create user` ➫  **`Access key ID`, `Secret access key`** 
+
+  <br/>
+
+* 권한 설정 부분 -  AWSElasticBeanstalkFullAccess 
+
+![AWSElasticBeanstalkFullAccess ]({{ site.url }}/data/AwsEB/0-IAM_AWSElasticBeanstalkFullAccess.png)
+
 <br/>
 
-`서비스` ➫ `Add user` : EB-User: ☑Programmatic access ➫ `permission`  ➫ `Attach existing policies directly` ➫ ☑ AWSElasticBeanstalkFullAccess ➫ Review ➫ `Create user` ➫  **`Access key ID`, `Secret access key`** 
+* Access_Key _ID 및 Access_Secret_Key 저장하기 
+  * [유저명] 기입 후 해당 유저에 맞는 값들을 저장한다. 
 
 ```shell
-# ~/.aws/credentials
+➜  vim ~/.aws/credentials
+
 [ec2]
 aws_access_key_id = ************
 aws_secret_access_key = ********************
@@ -609,50 +630,103 @@ aws_secret_access_key = **************
 
 <br/>
 
-## 2) awsebcli
+## 2) EB CLI
 
-```shell
-# Elastic Beanstalk 명령줄 인터페이스(EB CLI)
-$ pip install awsebcli
+> [AWS 공식문서 - Elastic Beanstalk 명령줄 인터페이스(EB CLI)](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/eb-cli3.html)
 
-# 애플리케이션 생성 
-$ eb init --profile eb-user
+
+
+**EB CLI** (Elastic Beanstalk Command Line Interface)는  GUI 방식의  AWS Management Console 대신 <u>텍스트 터미널을 통하여 AWS EB 환경을 만들고, 관리하는 등 상호 작용을 하는 명령줄 클라이언트</u>를 말합니다.   참고로 Python으로 개발되었다.  <br/>
+
+❶  [설치 및 제거 - AWS 공식문서](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/eb-cli3-install.html) 
+
+```sh
+# 1.설치 명령
+➜  pip install awsebcli --upgrade --user
+
+# 2. PATH 환경변수에 실행파일 경로 추가 
+# 2-1. 사용하는 SHELL 알기 
+➜  echo $SHELL
+/usr/bin/zsh
+# 2-2. .zshrc(zsh의 프로파일 스크립트 파일)에서 export
+➜  vim ~/.zshrc
+export PATH=~/.local/bin:$PATH
+# 2-3. 프로파일 스크립트를 현재 세션에 로드하기
+➜  source ~/.zshrc
+
+# 3. EB CLI 설치 확인
+➜  eb --version
+EB CLI 3.12.0 (Python 3.6.2)
+
+# 4. 제거
+➜  pip uninstall awsebcli
+```
+
+* EB 시작 
+
+```sh
+➜ eb init --profile eb-user
+
 #--------------------------
 Select a default region 10) ap-northeast-2: Asia Pacific(Seoul)
 Enter Application Name
 It appears you are using Docker. Is this correct? (Y/n): Y
-Select a platform versions 1) Docker 17.03.2-ce #최신버전
+# 1) 최신버전을 고른다. 
+Select a platform versions 1) Docker 17.03.2-ce 
+# CodeCommit은 사용하지 않는다. 
 CodeCommit? (y/N)(default is n): n
+# 키페어의 위치는 ~/.ssh/EB-Docker-Deploy-Keypair.pem 전제로 한다. 
 Select a keypair 4)[ Create new KeyPair ]
 Type a keypair name.(Default is aws-eb): EB-Docker-Deploy-Keypair
-## ~/.ssh/EB-Docker-Deploy-Keypair.pem 
+```
 
-# (애플리케이션 서버 전 개발/배포)환경 생성
-$ eb create --profile eb-user
+* EB 도커 플랫폼 환경 만들기 - Django 앱이 있는 도커 이미지가 이식(?)되기 전 상황이다.  물음표 처리는  나중에 배포 과정에서  EB가 Dockerfile을 참조하여 도커 이미지를 생성하기 때문이다.  물론 베이스 이미지는 Docker Hub에서 다운로드한다. 
+  * 아래 명령의 결과  **.gitignore**에  EB관련 파일이 자동으로 기재된다. 
+
+```sh
+➜ eb create --profile eb-user
 # ----------------------------
 Enter Environment Name: EB_Docker-Deploy-Master
-Enter DNS CNAME prefix: greg_eb_docker # 고유값이어야 함 
+# 아래 CNAME은 고유해야 함
+Enter DNS CNAME prefix: greg_eb_docker  
 Select a load balancer type  2)application
+```
+
+* `.gitignore` 
+
+```
 ## .gitignore에 자동 생성 
 #### Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
-
-# EB 배포
-eb deploy
-# 배포 확인 
-eb open
-
-# 빌드 관련 오류 보기 (EB에서 도커컨테이너 실행 중)
-eb ssh
-# -----
-sudo docker ps
-sudo docker exec -it [컨테이너 ID] /bin/zsh
-(app)➡ cat /var/log/eb-activity.log
 ```
 
-* eb init /	eb create / eb deploy / eb open /eb ssh
+* EB 배포 -  git commit을 기준으로  배포한다.  
+  * 그러나 settings에서 분리된 .config_secret을  git의 추적에서 배제(.gitignore에 `.config_secret/`)하였으므로 EB 배포에 실패한다. 
+  * 따라서 아래 3)의  .ebignore 작성 과정에서  위 .config_secret 디렉토리를 EB가 인식할 수 있도록 처리해야 한다. 
+  * **주의하자!!! -**  .ebignore가 작성된 이상  EB는 .gitignore를 무시하므로 더 이상 git commit을 기준으로 배포하지 않는다. 
+
+```shell
+➜ eb deploy
+```
+
+* 배포 확인하기 - 아래 명령을 하면 기본 웹 브라우저에 뜬다. 
+
+```sh
+➜ eb open
+```
+
+* 빌드 관련 오류 보기 - EB 안에서 작동하는 도커에 ssh 통신으로 접속한다.  도커 컨테이너 내부에서  `eb-activity.log`기록을 살펴볼 수 있다. 
+
+```sh
+# 빌드 관련 오류 보기 (EB에서 도커컨테이너 실행 중)
+➜ eb ssh
+# -----
+➜ sudo docker ps
+➜ sudo docker exec -it [컨테이너 ID] /bin/zsh
+(app)➡ cat /var/log/eb-activity.log
+```
 
 <br/>
 
@@ -662,32 +736,44 @@ sudo docker exec -it [컨테이너 ID] /bin/zsh
 
 <br/>
 
-​    EB는 이미지 안에 Dockerfile을 찾아 읽고,  `eb deploy`는  `git commit`한 파일들을 기준으로 배포한다.  **중요한 secret 정보**(예를들어, `.config_secret`)들은 GitHub에 공개할 수 없으므로 `.gitignore`에 담는다.   `git commit` 할 수 없으므로, EB는 위 정보들을 인식할 수 없어서 다음과 같은 Error가 발생한다. 
+* .ebignore를 작성해야 하는 이유
+  * ​ EB는 이미지 안에 Dockerfile을 찾아 읽고,  `eb deploy`는  `git commit`한 파일들을 기준으로 배포한다.  **중요한 secret 설정 정보**(예를들어, `.config_secret`)들은 GitHub에 공개할 수 없는 비공개 정보이므로 `.gitignore`를 통하여 git의 추적에서 벗어나야 한다.  
+  * git의 추적으로 벗어난 결과   git commit을 기준으로 배포하는 EB deploy가 위 설정 정보를 읽지 못하게 되므로 아래와 같이 배포에 실패한다. 
+  * .ebignore의 역할은  .gitignore의 역할을 하면서 동시에  .config_secret 디렉토리의 파일들에 담긴 설정 정보를 읽을 수 있도록 처리하는 것이다. 
+* .ebignore 작성 전 Error의 모습  
 
 ```sh
 # EB 내 docker 환경 (➡ 위 빌드관련 오류보기 참조)
+➜ eb ssh
+# -----
+➜ sudo docker ps
+➜ sudo docker exec -it [컨테이너 ID] /bin/zsh
+(app)➡ cat /var/log/eb-activity.log
+
 ...
 config_secret_common = json.loads(open(CONFIG_SECRET_FILE).read())
 fileNotFoundError: [Errno 2] No Such file or directory: '/srv/app/.config_secret/settings_common.json'
 ```
 
-  .ebignore를 작성하면  EB는 .gitignore를 무시한다.  문제는 .gitignore로 무시해야할 파일들도 모두 인식하므로, 
+<br/>
 
- ` .gitignore`의 내용을 모두 복사하여 붙이고,
+*  .ebignore에서 작성할 내용 
 
- 다음과 같이 `.ebignore`를 작성한다. 
+  * .ebignore를 작성하면 EB는 .gitignore를 무시한다.  즉, EB는  .gitignore로 무시해야할 파일 모두를 인식하게 된다. 
+  * 그러나 이 단계의 목표는  EB가 .config_secret/ 디렉토리의 설정 파일들에 담긴 설정 정보만  인식할 수 있게 처리하는 것이다. 
+  * 따라서  ❶  ` .gitignore`의 내용을 모두 복사하여 붙이고,  ❷ .config_secret/에 대해서만 아래와 같이 작성한다. 
 
-```sh
-# custom
-.idea/
-.static_root/
-.media/
+  ```sh
+  # custom
+  .idea/
+  .static_root/
+  .media/
+  .config_secret/
 
-.config_secret/
-# .ebignore
-!.config_secret/
-...
-```
+  # .ebignore
+  !.config_secret/
+  ...
+  ```
 
 <br/>
 
@@ -695,21 +781,46 @@ fileNotFoundError: [Errno 2] No Such file or directory: '/srv/app/.config_secret
 
 ## 4) RDS 인바운드 규칙 
 
+> 
+
+앱/웹 개발자는 애플리케이션의 소스코드를 가장 소중하게 여기지만 서비스 운영자나 경영자의 입장에서 가장 중요한 자산은 고객들의 정보를 담은 데이터베이스이다.  
+
+데이터베이스만 지킬 수 있으면  어플리케이션 소스코드는 개발자에게 맡겨서 복구할 수 있지만  한번 잃어버린 데이터베이스는 복구할 수 없다.  따라서 업무 현실을 살펴보면 DB를 날린 은행과 보험사 사건은 단연 톱 뉴스 감이 되고, DBA가 개발자보다 더 높은 연봉을 받는 경우가 많다. 
+
+따라서  보안상 데이터베이스에 대한 접근을 가장 엄격하게 다루어야 한다.    어떤 DB관리자는 DB작업을 할 때 목욕을 하고 경건한 마음으로 작업한다고 말한다. 
+
+AWS는 이러한 DB의 보안을 위해 **RDS 보안그룹 인바운드규칙**에서  `내 IP` 주소로부터 오는 요청만 허용하고 있다. 이하  ➀ 인바운드 규칙 설정 전의 오류 상황과 ➁ 인바운드 규칙에 EC2( Django 앱이 도커 컨테이너에서 작동하고 있고 RDS로의 연결이 필요하다.)의  보안그룹을 추가하는 방법을 설명한다. 
+
 <br/>
+
+* 오류 상황 - 인바운드 규칙 설정 전 
 
 ```sh
 # EB docker의 error상황
 > psql --host=<RDS엔드포인트> --port=5432 --user=<사용자명> DB이름
+
 psql: could not connect to server: Operation timed out
 Is the Server running on host "<RDS엔드포인트>" and accepting 
    TCP/IP connection on port 5432?
 ```
 
-AWS `서비스` > `EC2` > `보안그룹`:  자동생성된 EB 보안 그룹 `awseb-e***` 중 `설명`에서
+<br/>
 
-**SecurityGroup for ElasticBeanstalk environment**이 있는 그룹ID 선택
+* 인바운드 규칙에  EC2 보안그룹을 추가하기 
 
-인바운드규칙 편집 >  `PostgreSQL` `5432`  `사용자지정`  <그룹ID>
+  ![EC2 security Group]({{ site.url }}/data/AwsEB/0-inbound_securityGroup2.png)
+
+  <br/>
+
+  * AWS `서비스` > `EC2` > `보안그룹`  중 **SecurityGroup for ElasticBeanstalk environment**을 선택 
+
+  ![SecurityGroup for ElasticBeanstalk environment]({{ site.url }}/data/AwsEB/0-inbound_securityGroup4.png)
+
+  <br/>
+
+  * 인바운드규칙 편집 >  `PostgreSQL` `5432`  `사용자지정`  <그룹ID>
+
+  ![RDS inbound]({{ site.url }}/data/AwsEB/0-inbound_RDS.png)
 
 <br/>
 
