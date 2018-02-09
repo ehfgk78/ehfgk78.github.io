@@ -582,18 +582,27 @@ $ docker ps -a
 
 <br/>
 
->  [공식문서  http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/Welcome.html](http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/Welcome.html)  
->
-> 백엔드 개발자는 서버환경을 구축하고 웹 애플리케이션을 개발하는 역할을 하였다.  문제는 이 모두를 잘 다루는데  많은 시행착오와 시간을 들여야 한다는 점이다.   AWS의  Elastic Beanstalk(이하 EB로 약칭한다)을 사용하면 서버 구축/유지 관리에 드는 노력을 줄이고  웹 애플리케이션 개발에 집중할 수 있다. 
->
-> * EB는  Docker를 실행할 EC2,  데이터베이스 RDS,  파일 스토리지 S3 등을 연결해주고,  ELB로 EC2의 트래픽 등을 점검하다가 트래픽이 넘치면 자동으로 EC2를 추가해주는 Auto Scaling 기능을 알아서 설정해준다. 
-> * 그러나 EB 구축과정이  서버 구축만큼 어려울 수 있다. 
+> [AWS 공식문서- Docker 컨테이너에서 Elastic Beanstalk 애플리케이션 배포](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/create_deploy_docker.html) 
+
+최근 공식문서의 한글화가 많이 진행되어  영문으로 읽던 고통이  해소되었다.   한글화가 이루어지더라도  기술문서는 어느 정도 알아야 읽힌다는 점은 어쩔 수 없다. 
+
+ *  Elastic Beanstalk 초보자를 위해서 AWS는 [시작 자습서](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/GettingStarted.html)를 마련하였으나 마찬가지로 어느 정도 알아야 자습이 가능하다.   알면 읽을 필요 없다는 점이 위 자습서의 아이러니한 운명이다. 
+ *  우리가 구체적으로 다뤄볼 주제는 [ (Dockerfile을 사용하여) 미리 구성된 Docker 컨테이너](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/create_deploy_dockerpreconfig.html)이다.  위 링크의 설명만으로 충분하지 않아서  이 포스트를 작성해 보았다. 
+ *  이 포스트를 작성하는 데에 [이한영 강사](https://lhy.kr/)로부터 배운 내용임을 미리 밝혀둔다. (거의 모든 포스팅은 이한영 강사로부터 배운 것이다) 
 
 
+
+
+Elastic Beanstalk을 사용하는 이유 -  백엔드 개발자는 서버환경을 구축하고 웹 애플리케이션을 개발하는 역할을 하였다.  문제는 이 모두를 잘 다루는데  많은 시행착오와 시간을 들여야 한다는 점이다.   AWS의  Elastic Beanstalk(이하 EB로 약칭한다)을 사용하면 서버 구축/유지 관리에 드는 노력을 줄이고  웹 애플리케이션 개발에 집중할 수 있다. 
+
+ * EB는  Docker를 실행할 EC2,  데이터베이스 RDS,  파일 스토리지 S3 등을 연결해주고,  ELB로 EC2의 트래픽 등을 점검하다가 트래픽이 넘치면 자동으로 EC2를 추가해주는 Auto Scaling 기능을 알아서 설정해준다. 
+ * 개인적인 의견은  EB 구축과정이  서버 구축만큼 어려운 것 같다. (공부할 것이 많다) 
+
+<br/>
 
 >  [ECS( Amazon EC2 Container Service )](https://aws.amazon.com/ko/ecs/)
 >
-> Docker를 이용한 배포에 대해 최근  **ECS**를 쓰이고 있다.  여기서는 EB만을 다루기로 한다. 
+>  참고로 Docker를 이용한 배포에 대해 최근  **ECS**를 쓰이고 있다.  
 
 <br/>
 
@@ -633,12 +642,32 @@ aws_secret_access_key = **************
 ## 2) EB CLI
 
 > [AWS 공식문서 - Elastic Beanstalk 명령줄 인터페이스(EB CLI)](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/eb-cli3.html)
+>
+> **EB CLI** (Elastic Beanstalk Command Line Interface)는  GUI 방식의  AWS Management Console 대신 <u>텍스트 터미널을 통하여 AWS EB 환경을 만들고, 관리하는 등 상호 작용을 하는 명령줄 클라이언트</u>를 말합니다.   참고로 Python으로 개발되었다.  
+>
+> <br/>
+>
+> * [명령어 리스트 - AWS공식문서](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/eb3-cmd-commands.html) 
+>
+> | 기본 명령어         | 설명                           |
+> | -------------- | ---------------------------- |
+> | `eb create`    | 환경 생성                        |
+> | `eb deploy`    | `Dockerfile`을 사용하여 환경 업데이트   |
+> | `eb open`      | 브라우저에서 EB환경이 열림              |
+> | `eb status`    | 현재 상태 보기 , `git status`와 비슷함 |
+> | `eb health`    | Linux의 ps, top와 비슷함          |
+> | `eb events`    | EB의 이벤트 출력                   |
+> | `eb logs`      | 인스턴스의 로그기록을 가져옴              |
+> | `eb config`    | 환경 구성 옵션 보기                  |
+> | `eb terminate` | 환경 종료                        |
 
 
 
-**EB CLI** (Elastic Beanstalk Command Line Interface)는  GUI 방식의  AWS Management Console 대신 <u>텍스트 터미널을 통하여 AWS EB 환경을 만들고, 관리하는 등 상호 작용을 하는 명령줄 클라이언트</u>를 말합니다.   참고로 Python으로 개발되었다.  <br/>
 
-❶  [설치 및 제거 - AWS 공식문서](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/eb-cli3-install.html) 
+
+<br/>
+
+❶  [설치 / 제거 - AWS 공식문서](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/eb-cli3-install.html) 
 
 ```sh
 # 1.설치 명령
@@ -662,7 +691,13 @@ EB CLI 3.12.0 (Python 3.6.2)
 ➜  pip uninstall awsebcli
 ```
 
-* EB 시작 
+<br/>
+
+❷  [EB CLI 및 프로젝트 구성](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/eb-cli3-configuration.html)  `➜ eb init --profile [EB유저명]`
+
+* **--profile** 방식 [명명된 프로파일 사용] 
+* `git init`과 비슷하다. 
+* [EB CLI이 Git과 통합된다.](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/eb3-cli-git.html) 
 
 ```sh
 ➜ eb init --profile eb-user
@@ -680,8 +715,9 @@ Select a keypair 4)[ Create new KeyPair ]
 Type a keypair name.(Default is aws-eb): EB-Docker-Deploy-Keypair
 ```
 
-* EB 도커 플랫폼 환경 만들기 - Django 앱이 있는 도커 이미지가 이식(?)되기 전 상황이다.  물음표 처리는  나중에 배포 과정에서  EB가 Dockerfile을 참조하여 도커 이미지를 생성하기 때문이다.  물론 베이스 이미지는 Docker Hub에서 다운로드한다. 
-  * 아래 명령의 결과  **.gitignore**에  EB관련 파일이 자동으로 기재된다. 
+<br/>
+
+❸  EB 환경 생성  `➜ eb create`
 
 ```sh
 ➜ eb create --profile eb-user
@@ -692,7 +728,7 @@ Enter DNS CNAME prefix: greg_eb_docker
 Select a load balancer type  2)application
 ```
 
-* `.gitignore` 
+* 위 명령 실행 결과 `.gitignore` 에 다음과 같이 추가편집된다. 
 
 ```
 ## .gitignore에 자동 생성 
@@ -702,22 +738,29 @@ Select a load balancer type  2)application
 !.elasticbeanstalk/*.global.yml
 ```
 
-* EB 배포 -  git commit을 기준으로  배포한다.  
-  * 그러나 settings에서 분리된 .config_secret을  git의 추적에서 배제(.gitignore에 `.config_secret/`)하였으므로 EB 배포에 실패한다. 
-  * 따라서 아래 3)의  .ebignore 작성 과정에서  위 .config_secret 디렉토리를 EB가 인식할 수 있도록 처리해야 한다. 
-  * **주의하자!!! -**  .ebignore가 작성된 이상  EB는 .gitignore를 무시하므로 더 이상 git commit을 기준으로 배포하지 않는다. 
+<br/>
+
+❹  배포 -  기본적으로 git commit을 기준으로  배포한다.  
+
+* 그러나 settings에서 분리된 .config_secret을  git의 추적에서 배제(.gitignore에 `.config_secret/`)하였으므로 배포에 실패하게 된다. 
+* 따라서 아래 3)의  .ebignore 작성 과정에서  위 .config_secret 디렉토리를 EB가 인식할 수 있도록 처리해야 한다. 
+* **주의하자!!! -**  .ebignore가 작성된 이상  EB는 .gitignore를 무시하므로 더 이상 git commit을 기준으로 배포하지 않는다. 
 
 ```shell
 ➜ eb deploy
 ```
 
-* 배포 확인하기 - 아래 명령을 하면 기본 웹 브라우저에 뜬다. 
+<br/>
+
+❺  배포 확인하기 - 아래 명령을 하면 기본 웹 브라우저에 뜬다. 
 
 ```sh
 ➜ eb open
 ```
 
-* 빌드 관련 오류 보기 - EB 안에서 작동하는 도커에 ssh 통신으로 접속한다.  도커 컨테이너 내부에서  `eb-activity.log`기록을 살펴볼 수 있다. 
+<br/>
+
+❻  빌드 관련 오류 보기 - EB 안에서 작동하는 도커에 ssh 통신으로 접속한다.  도커 컨테이너 내부에서  `eb-activity.log`기록을 살펴볼 수 있다. 
 
 ```sh
 # 빌드 관련 오류 보기 (EB에서 도커컨테이너 실행 중)
@@ -734,12 +777,22 @@ Select a load balancer type  2)application
 
 ##  3) `.ebignore`
 
+> [AWS 공식문서 - EB CLI 구성 - .ebignore를 사용하여 파일 무시](https://docs.aws.amazon.com/ko_kr/elasticbeanstalk/latest/dg/eb-cli3-configuration.html) 
+>
+> * 여기에 설명이 무척 잘 되어 있습니다. 
+>
+> `.ebignore` 파일을 프로젝트 디렉터리에 추가하여 EB CLI가 디렉터리의 특정 파일을 무시하도록 명령할 수 있습니다. 이 파일은 `.gitignore` 파일처럼 작동합니다. 프로젝트 디렉터리를 Elastic Beanstalk에 배포하고 새 애플리케이션 버전을 생성하는 경우, EB CLI에는 이렇게 생성되는 소스 번들의 `.ebignore`에서 지정한 파일이 포함되지 않습니다.
+>
+> `.ebignore`가 없고 `.gitignore`가 있는 경우, EB CLI는 `.gitignore`에 지정된 파일을 무시합니다. `.ebignore`가 있으면 EB CLI는 `.gitignore`를 읽지 않습니다.
+>
+> `.ebignore`가 있으면 EB CLI는 git 명령을 사용하여 소스 번들을 생성하지 않습니다. 즉 EB CLI는 `.ebignore`에 지정된 파일을 무시하고 다른 모든 파일을 포함시킵니다. 특히 커밋되지 않은 소스 파일을 포함시킵니다.
+
 <br/>
 
 * .ebignore를 작성해야 하는 이유
-  * ​ EB는 이미지 안에 Dockerfile을 찾아 읽고,  `eb deploy`는  `git commit`한 파일들을 기준으로 배포한다.  **중요한 secret 설정 정보**(예를들어, `.config_secret`)들은 GitHub에 공개할 수 없는 비공개 정보이므로 `.gitignore`를 통하여 git의 추적에서 벗어나야 한다.  
-  * git의 추적으로 벗어난 결과   git commit을 기준으로 배포하는 EB deploy가 위 설정 정보를 읽지 못하게 되므로 아래와 같이 배포에 실패한다. 
-  * .ebignore의 역할은  .gitignore의 역할을 하면서 동시에  .config_secret 디렉토리의 파일들에 담긴 설정 정보를 읽을 수 있도록 처리하는 것이다. 
+  * ​ `eb deploy`(EB CLI 중 하나)는  `git commit`한 파일들을 기준으로 배포한다.  **중요한 secret 설정 정보**(예를들어, `.config_secret`)들은 GitHub에 공개할 수 없는 비공개 정보이므로 `.gitignore`를 통하여 git의 추적에서 벗어나야 한다.  
+  * git의 추적으로 벗어난 결과   git commit을 기준으로 배포하는 `eb deploy`가 위 설정 정보를 읽지 못하게 되므로 아래와 같이 배포에 실패한다. 
+  * .ebignore의 역할은  .config_secret 디렉토리의 파일들만 제외하고 .gitignore에서 무시한 파일들을 역시 무시해야한다. 
 * .ebignore 작성 전 Error의 모습  
 
 ```sh
