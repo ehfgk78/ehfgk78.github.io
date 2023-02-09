@@ -15,6 +15,7 @@ tags: [Python, Django]
 * [Dive Into Python](http://www.diveintopython.net/)
   * 여기, 무료 온라인 북을 제공함 
 * [Learn python the hard way](https://learnpythonthehardway.org/)
+* [Learn Python Programming Detail](https://www.scaler.com/topics/python/)
 * [Making Games with Python & Pygame](http://inventwithpython.com/#pygame)
   * 여기, 무료 온라인 북을 제공함 
 * [Two Scoops of Django 1.11 Pdf Free Download](https://smtebooks.com/book/6227/two-scoops-django-111-pdf)
